@@ -88,7 +88,7 @@ var main = function () {
             if(result.length == 1) {
 
                 var token = jwt.sign({ username: "ado" }, 'supersecret', { expiresIn: 120 });
-                response["token"] = token; 
+                response["accessToken"] = token; 
                 response["validFor"] = "120";
                 response["validForUnit"] = "seconds";
                 response["responseCode"] = "OK"; 
@@ -110,7 +110,7 @@ var main = function () {
     
     });
 
-    app.get('/catalog/products/:SKU/:LIMIT',
+    app.get('/catalog/product/get/:SKU',
 
         [
             check('SKU').isLength({ min: 3 }).withMessage("SKU Value needs to be more than 3 characters ..."),
@@ -122,22 +122,18 @@ var main = function () {
 
         (req, res) => {
 
-            let vx = req.params.SKU;
-            let lmt = parseInt(req.params.LIMIT);
-
-            console.log("MAIN:GET() Receiving Request on /products with SKU/LIMIT >> " + vx + " : " + lmt);
+            let sku = req.params.SKU;
 
             var db = mongoUtil.getDb();
             var collection = mongoUtil.getCollection();
 
-            var query = { "Region": vx };
+            var query = { "ProductSKU": sku };
 
-            collection.find(query).limit(lmt).toArray(function (err, result) {
+            collection.find(query).toArray(function (err, result) {
 
                 res.setHeader('Content-Type', 'application/json');
 
                 if (err) throw err;
-                console.log("MONGO: RETURNING RESULT ...");
 
                 res.json(result);
                 res.end();
@@ -147,7 +143,7 @@ var main = function () {
         });
 
 
-    app.post('/catalog/product/',
+    app.post('/catalog/product/add',
 
         [
             check('ProductSKU').exists().withMessage("ProductSKU should be present ..."),
@@ -166,9 +162,7 @@ var main = function () {
             check('RegularPrice').isDecimal().withMessage("RegularPrice should be numeric ..."),
 
             check('PromotionPrice').exists().withMessage("PromotionPrice should be present ..."),
-            check('PromotionPrice').isDecimal().withMessage("PromotionPrice should be numeric ..."),    
-            
-            
+            check('PromotionPrice').isDecimal().withMessage("PromotionPrice should be numeric ..."),               
         ],
 
         authenticate,
@@ -181,14 +175,35 @@ var main = function () {
             var db = mongoUtil.getDb();
             var collection = mongoUtil.getCollection();
 
-            collection.insertOne(product, function(err, res) {
-                if (err) throw err;
-                console.log("Document inserted");
-              });
+            var query = { "ProductSKU": req.body.ProductSKU };
 
-            res.json(product);
-            res.end();
+            collection.find(query).toArray(function(err, result) {
 
+                res.setHeader('Content-Type', 'application/json');
+                response = new Object();
+
+                if(result.length == 0) {
+
+                    collection.insertOne(product, function(err, res) {
+                        if (err) throw err;
+                        console.log("Document inserted");
+                    });
+
+                    response["responseCode"] = "OK"; 
+                    response["response"] = product; 
+
+                }  else {
+ 
+                    response["responseCode"] = "INVALID"; 
+                    response["responseMessage"] = "Product with the mentioned SKU already exists, if you want to update any field(s) please use the update endpoint ...";
+
+                }  
+
+                res.json(response);
+                res.end();
+
+
+            });
 
         });
 
