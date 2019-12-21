@@ -186,11 +186,10 @@ var main = function () {
 
                     collection.insertOne(product, function(err, res) {
                         if (err) throw err;
-                        console.log("Document inserted");
+                        response["responseCode"] = "OK"; 
+                        response["response"] = product; 
                     });
 
-                    response["responseCode"] = "OK"; 
-                    response["response"] = product; 
 
                 }  else {
  
