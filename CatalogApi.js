@@ -118,10 +118,10 @@ var main = function () {
     
     });
 
-    app.get('/catalog/product/get/:SKU',
+    app.get('/catalog/product/:SKU',
 
         [
-            check('SKU').isLength({ min: 3 }).withMessage("SKU Value needs to be more than 3 characters ..."),
+            check('SKU').exists().withMessage("SKU should be present ..."),
         ],
 
         authenticate,
