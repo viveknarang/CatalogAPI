@@ -25,6 +25,7 @@ let jwtTokenExpiry = properties.get('jwt.token.expiry');
 let apiResponseCodeOk = properties.get('api.response.code.ok');
 let apiResponseCodeInvalid = properties.get('api.response.code.invalid');
 let apiResponseCodeError = properties.get('api.response.code.error');
+let apiVersion = properties.get('api.version');
 
 var client = redis.createClient(redisPort, redisHost);
 var app = express();
@@ -80,7 +81,7 @@ var main = function () {
     
     });
     
-    app.get('/admin/customer/login/', function (req, res) {
+    app.get('/admin/'+ apiVersion +'/customer/login/', function (req, res) {
     
         let cid = req.query.customerID;
         let passcode = req.query.passcode;   
@@ -118,7 +119,7 @@ var main = function () {
     
     });
 
-    app.get('/catalog/product/:SKU',
+    app.get('/catalog/'+ apiVersion +'/product/:SKU',
 
         [
             check('SKU').exists().withMessage("SKU should be present ..."),
@@ -173,7 +174,7 @@ var main = function () {
     });
 
 
-    app.post('/catalog/product',
+    app.post('/catalog/'+ apiVersion +'/product',
 
         [
             check('ProductSKU').exists().withMessage("ProductSKU should be present ..."),
@@ -241,7 +242,7 @@ var main = function () {
     });
 
     
-    app.put('/catalog/product',
+    app.put('/catalog/'+ apiVersion +'/product',
 
         [
             check('ProductSKU').exists().withMessage("ProductSKU should be present ..."),
@@ -322,7 +323,7 @@ var main = function () {
     });
 
 
-    app.delete('/catalog/product/:SKU',
+    app.delete('/catalog/'+ apiVersion +'/product/:SKU',
 
         [
             check('SKU').exists().withMessage("SKU should be present ..."),
