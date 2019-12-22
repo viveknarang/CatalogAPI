@@ -1,11 +1,19 @@
 // CatalogAPI
 
-// Load in our dependencies
 var express = require('express');
 var jwt = require('jsonwebtoken');
-var WebAppPort = 9005;
 var PropertiesReader = require('properties-reader');
+var mongoUtil = require('./Database');
+var compression = require('compression');
+const { check, validationResult } = require('express-validator/check')
+const Product = require('./Product');
+var bodyParser = require('body-parser');
+var path = require("path");
+var redis = require('redis');
+
 var properties = PropertiesReader('CatalogAPI.properties');
+
+var WebAppPort = properties.get('api.port');
 let homepage = properties.get('API.homepage');
 let catalogHomepage = properties.get('catalogAPI.homepage');
 let adminHomepage = properties.get('adminAPI.homepage');
@@ -18,22 +26,11 @@ let apiResponseCodeOk = properties.get('api.response.code.ok');
 let apiResponseCodeInvalid = properties.get('api.response.code.invalid');
 let apiResponseCodeError = properties.get('api.response.code.error');
 
-
-var app = express();
-var mongoUtil = require('./Database');
-var compression = require('compression');
-const { check, validationResult } = require('express-validator/check')
-const Product = require('./Product');
-var bodyParser = require('body-parser');
-var path = require("path");
-var redis = require('redis');
-
 var client = redis.createClient(redisPort, redisHost);
-
+var app = express();
 app.use(compression());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
-
 
 function authenticate(req, res, next) {
 
