@@ -173,7 +173,7 @@ var main = function () {
         });
 
 
-    app.post('/catalog/product/add',
+    app.post('/catalog/product',
 
         [
             check('ProductSKU').exists().withMessage("ProductSKU should be present ..."),
@@ -218,13 +218,10 @@ var main = function () {
 
                         if (err) throw err;
 
-                        response["responseCode"] = apiResponseCodeOk; 
-                        response["response"] = product; 
-                        res.json(response);
-                        res.end();
-
                     });
 
+                    response["responseCode"] = apiResponseCodeOk; 
+                    response["response"] = product; 
 
                 }  else {
  
@@ -239,8 +236,84 @@ var main = function () {
 
             });
 
-        });
+    });
 
+    
+    app.put('/catalog/product',
+
+        [
+            check('ProductSKU').exists().withMessage("ProductSKU should be present ..."),
+            check('ProductSKU').isLength({ min: 3 }).withMessage("ProductSKU Value needs to be more than 3 characters ..."),
+
+            check('ProductName').exists().withMessage("ProductName should be present ..."),
+            check('ProductName').isLength({ min: 3 }).withMessage("ProductName Value needs to be more than 3 characters ..."),
+
+            check('ProductGroupID').exists().withMessage("ProductGroupID should be present ..."),
+            check('ProductGroupID').isLength({ min: 3 }).withMessage("ProductGroupID Value needs to be more than 3 characters ..."),
+
+            check('ProductDesription').exists().withMessage("ProductDesription should be present ..."),
+            check('ProductDesription').isLength({ min: 3 }).withMessage("ProductDesription Value needs to be more than 3 characters ..."),
+
+            check('RegularPrice').exists().withMessage("RegularPrice should be present ..."),
+            check('RegularPrice').isDecimal().withMessage("RegularPrice should be numeric ..."),
+
+            check('PromotionPrice').exists().withMessage("PromotionPrice should be present ..."),
+            check('PromotionPrice').isDecimal().withMessage("PromotionPrice should be numeric ..."),               
+        ],
+
+        authenticate,
+
+        validateInput,
+
+        (req, res) => {
+
+            const product = new Product(req.body);
+            const dbProduct = null;
+
+            var db = mongoUtil.getDb();
+            var collection = mongoUtil.getCollection();
+
+            var query = { "ProductSKU": req.body.ProductSKU };
+
+            collection.find(query).toArray(function(err, result) {
+
+                res.setHeader('Content-Type', 'application/json');
+                response = new Object();
+
+                if(result.length == 0) {
+
+                    collection.insertOne(product, function(err, res) {
+
+                        if (err) throw err;
+
+                    });
+
+                    response["responseCode"] = apiResponseCodeOk; 
+                    response["response"] = product; 
+
+                }  else {
+
+                    product["_id"] = result[0]["_id"];
+                    console.log(product);
+
+                    collection.updateOne(query, product, function(err, res) {
+                        
+                        if (err) throw err;
+                    
+                    });
+
+                    response["responseCode"] = apiResponseCodeOk; 
+                    response["responseMessage"] = "Product Updated";
+                    response["response"] = product;
+
+                }  
+
+                res.json(response);
+                res.end();
+
+            });
+
+    });
 
 
     app.listen(WebAppPort, () => { console.log(`Listening port ${WebAppPort} ...`); });
