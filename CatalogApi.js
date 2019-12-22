@@ -10,6 +10,8 @@ let homepage = properties.get('API.homepage');
 let catalogHomepage = properties.get('catalogAPI.homepage');
 let adminHomepage = properties.get('adminAPI.homepage');
 let customerCollection = properties.get('mongodb.internal.admin.collection');
+let redisHost = properties.get('redis.host');
+let redisPort = properties.get('redis.port');
 
 var app = express();
 var mongoUtil = require('./Database');
@@ -17,7 +19,10 @@ var compression = require('compression');
 const { check, validationResult } = require('express-validator/check')
 const Product = require('./Product');
 var bodyParser = require('body-parser');
-var path    = require("path");
+var path = require("path");
+var redis = require('redis');
+
+var client = redis.createClient(redisPort, redisHost);
 
 app.use(compression());
 app.use(bodyParser.json());
@@ -72,9 +77,6 @@ var main = function () {
     
         let cid = req.query.customerID;
         let passcode = req.query.passcode;   
-
-        console.log(cid);
-        console.log(passcode);
         
         var db = mongoUtil.getDb();    
         var query = { "CustomerID" : cid, "CustomerPasscode" : passcode };
@@ -116,29 +118,51 @@ var main = function () {
             check('SKU').isLength({ min: 3 }).withMessage("SKU Value needs to be more than 3 characters ..."),
         ],
 
-        authenticate,
+        //authenticate,
 
         validateInput,
 
         (req, res) => {
 
             let sku = req.params.SKU;
+            res.setHeader('Content-Type', 'application/json');
 
-            var db = mongoUtil.getDb();
-            var collection = mongoUtil.getCollection();
+            client.get(sku, function (error, result) {
 
-            var query = { "ProductSKU": sku };
+                if (error) {
+                    console.log(error);
+                    throw error;
+                }
 
-            collection.find(query).toArray(function (err, result) {
+                if (result == null) {
 
-                res.setHeader('Content-Type', 'application/json');
+                        var db = mongoUtil.getDb();
+                        var collection = mongoUtil.getCollection();
+            
+                        var query = { "ProductSKU": sku };
+            
+                        collection.find(query).toArray(function (err, result) {
+            
+           
+                            if (err) throw err;
+            
+                            client.set(sku, JSON.stringify(result));
+            
+                            res.json(result);
+                            res.end();
+            
+                        });
 
-                if (err) throw err;
+                } else {
 
-                res.json(result);
-                res.end();
+                            res.json(JSON.parse(result));
+                            res.end();
+
+                }
+
 
             });
+
 
         });
 
