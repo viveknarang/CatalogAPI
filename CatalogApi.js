@@ -170,7 +170,7 @@ var main = function () {
             });
 
 
-        });
+    });
 
 
     app.post('/catalog/product',
@@ -214,24 +214,26 @@ var main = function () {
 
                 if(result.length == 0) {
 
-                    collection.insertOne(product, function(err, res) {
+                    collection.insertOne(product, function(err, result) {
 
                         if (err) throw err;
-
+                        response["responseCode"] = apiResponseCodeOk; 
+                        response["response"] = product;
+                        res.json(response);
+                        res.end();
+        
                     });
 
-                    response["responseCode"] = apiResponseCodeOk; 
-                    response["response"] = product; 
+
 
                 }  else {
  
                     response["responseCode"] = apiResponseCodeInvalid; 
                     response["responseMessage"] = "Product with the mentioned SKU already exists, if you want to update any field(s) please use the update endpoint ...";
-
+                    res.json(response);
+                    res.end();
+    
                 }  
-
-                res.json(response);
-                res.end();
 
 
             });
@@ -282,42 +284,79 @@ var main = function () {
 
                 if(result.length == 0) {
 
-                    collection.insertOne(product, function(err, res) {
+                    collection.insertOne(product, function(err, result) {
 
                         if (err) throw err;
 
-                    });
+                        response["responseCode"] = apiResponseCodeOk; 
+                        response["response"] = product;
+                        res.json(response);
+                        res.end(); 
 
-                    response["responseCode"] = apiResponseCodeOk; 
-                    response["response"] = product; 
+                    });
 
                 }  else {
 
                     product["_id"] = result[0]["_id"];
                     console.log(product);
 
-                    collection.updateOne(query, product, function(err, res) {
+                    collection.updateOne(query, product, function(err, result) {
                         
                         if (err) throw err;
-                    
+                        
+                        response["responseCode"] = apiResponseCodeOk; 
+                        response["responseMessage"] = "Product Updated";
+                        response["response"] = product;
+                        res.json(response);
+                        res.end();
+
                     });
 
-                    response["responseCode"] = apiResponseCodeOk; 
-                    response["responseMessage"] = "Product Updated";
-                    response["response"] = product;
+
 
                 }  
 
-                res.json(response);
-                res.end();
 
             });
 
     });
 
 
-    app.listen(WebAppPort, () => { console.log(`Listening port ${WebAppPort} ...`); });
+    app.delete('/catalog/product/:SKU',
 
+        [
+            check('SKU').exists().withMessage("SKU should be present ..."),
+        ],
+
+        authenticate,
+
+        validateInput,
+
+        (req, res) => {
+
+            let sku = req.params.SKU;
+            res.setHeader('Content-Type', 'application/json');
+
+            var query = { "ProductSKU": sku };
+
+            var db = mongoUtil.getDb();
+            var collection = mongoUtil.getCollection();
+            response = new Object();
+
+            collection.deleteOne(query, function(err, result) {
+                if (err) throw err;
+
+                response["responseCode"] = apiResponseCodeOk; 
+                response["responseMessage"] = "Product Deleted";
+
+                res.json(response);
+                res.end();
+
+            });
+        
+    });
+
+    app.listen(WebAppPort, () => { console.log(`Listening port ${WebAppPort} ...`); });
 
 };
 
