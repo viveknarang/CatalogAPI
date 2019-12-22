@@ -87,7 +87,7 @@ var main = function () {
 
             if(result.length == 1) {
 
-                var token = jwt.sign({ username: "ado" }, 'supersecret', { expiresIn: 120 });
+                var token = jwt.sign({ username: "ado" }, 'supersecret', { expiresIn: 300 });
                 response["accessToken"] = token; 
                 response["validFor"] = "120";
                 response["validForUnit"] = "seconds";
