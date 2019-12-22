@@ -44,8 +44,6 @@ function authenticate(req, res, next) {
 
     jwt.verify(token, jwtKey, function (err, decoded) {
 
-        console.log(decoded["customerSecret"]);
-
         if (!err) {
             next();
         } else {
@@ -207,9 +205,30 @@ var main = function () {
 
             check('RegularPrice').exists().withMessage("RegularPrice should be present ..."),
             check('RegularPrice').isDecimal().withMessage("RegularPrice should be numeric ..."),
+            
+            check('RegularPrice').custom(RegularPrice => {
+
+                if (RegularPrice < 0) {
+                  throw new Error('RegularPrice cannot be less than 0 ...')
+                } else {
+                    return true
+                }
+
+            }),
 
             check('PromotionPrice').exists().withMessage("PromotionPrice should be present ..."),
-            check('PromotionPrice').isDecimal().withMessage("PromotionPrice should be numeric ..."),               
+            check('PromotionPrice').isDecimal().withMessage("PromotionPrice should be numeric ..."),   
+            
+            check('PromotionPrice').custom(PromotionPrice => {
+
+                if (PromotionPrice < 0) {
+                  throw new Error('PromotionPrice cannot be less than 0 ...')
+                } else {
+                    return true
+                }
+
+            })
+
         ],
 
         authenticate,
@@ -278,8 +297,29 @@ var main = function () {
             check('RegularPrice').exists().withMessage("RegularPrice should be present ..."),
             check('RegularPrice').isDecimal().withMessage("RegularPrice should be numeric ..."),
 
+            check('RegularPrice').custom(RegularPrice => {
+
+                if (RegularPrice < 0) {
+                  throw new Error('RegularPrice cannot be less than 0 ...')
+                } else {
+                    return true
+                }
+
+            }),
+
             check('PromotionPrice').exists().withMessage("PromotionPrice should be present ..."),
-            check('PromotionPrice').isDecimal().withMessage("PromotionPrice should be numeric ..."),               
+            check('PromotionPrice').isDecimal().withMessage("PromotionPrice should be numeric ..."),   
+            
+            check('PromotionPrice').custom(PromotionPrice => {
+
+                if (PromotionPrice < 0) {
+                  throw new Error('PromotionPrice cannot be less than 0 ...')
+                } else {
+                    return true
+                }
+
+            })
+            
         ],
 
         authenticate,
