@@ -147,8 +147,6 @@ var main = function () {
 
             redisClient.get(req.url, function (error, cache_result) {
 
-                console.log(JSON.parse(cache_result));
-
                 if (error) {
                     console.log(error);
                     throw error;
@@ -164,10 +162,12 @@ var main = function () {
             
            
                                 if (err) throw err;
-                
-                                redisClient.set(req.url, JSON.stringify(result));
-                
-                                res.json(result);
+               
+                                if (result.length == 1) {
+                                    redisClient.set(req.url, JSON.stringify(result[0]));
+                                    res.json(result[0]);
+                                }
+
                                 res.end();
                 
                             });
@@ -359,13 +359,14 @@ var main = function () {
                         }  else {
 
                             product["_id"] = result[0]["_id"];
-                            console.log(product);
 
                             dbClient.db(externalDB).collection(customer_domain + "." + productsCollection).updateOne(query, product, function(err, result) {
                                 
                                 if (err) throw err;
-
-                                redisClient.set(req.url, JSON.stringify(product));
+                                
+                                redisClient.del(req.url + req.body.ProductSKU);
+                                redisClient.set(req.url + req.body.ProductSKU, JSON.stringify(product));
+                                
                                 response["responseCode"] = apiResponseCodeOk; 
                                 response["responseMessage"] = "Product Updated";
                                 response["response"] = product;
