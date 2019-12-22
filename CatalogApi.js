@@ -145,14 +145,16 @@ var main = function () {
 
             res.setHeader('Content-Type', 'application/json');
 
-            redisClient.get(req.url, function (error, result) {
+            redisClient.get(req.url, function (error, cache_result) {
+
+                console.log(JSON.parse(cache_result));
 
                 if (error) {
                     console.log(error);
                     throw error;
                 }
 
-                if (result == null) {
+                if (cache_result == null || cache_result.length == 0) {
 
                         redisClient.get(req.headers['x-access-token'], function(error, customer_domain) {
 
@@ -176,7 +178,7 @@ var main = function () {
 
                 } else {
 
-                            res.json(JSON.parse(result));
+                            res.json(JSON.parse(cache_result));
                             res.end();
 
                 }
@@ -362,7 +364,8 @@ var main = function () {
                             dbClient.db(externalDB).collection(customer_domain + "." + productsCollection).updateOne(query, product, function(err, result) {
                                 
                                 if (err) throw err;
-                                
+
+                                redisClient.set(req.url, JSON.stringify(product));
                                 response["responseCode"] = apiResponseCodeOk; 
                                 response["responseMessage"] = "Product Updated";
                                 response["response"] = product;
@@ -405,6 +408,8 @@ var main = function () {
 
                     dbClient.db(externalDB).collection(customer_domain + "." + productsCollection).deleteOne(query, function(err, result) {
                         if (err) throw err;
+
+                        redisClient.del(req.url);
 
                         response["responseCode"] = apiResponseCodeOk; 
                         response["responseMessage"] = "Product Deleted";
