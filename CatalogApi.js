@@ -106,11 +106,14 @@ var main = function () {
             if(result.length == 1) {
 
                 var token = jwt.sign({ customerSecret: result[0]["CustomerSecret"] }, jwtKey, { expiresIn: jwtTokenExpiry });
+                
+                redisClient.set(token, result[0]["CustomerName"] + "." + result[0]["CustomerSecret"]);
+                redisClient.expire(token, jwtTokenExpiry);
+
                 response["token"] = token; 
                 response["validFor"] = jwtTokenExpiry;
                 response["responseCode"] = apiResponseCodeOk; 
                 response["responseMessage"] = "Access with valid credentials ...";
-
             
             } else {
 
@@ -141,6 +144,7 @@ var main = function () {
         (req, res) => {
 
             let sku = req.params.SKU;
+
             res.setHeader('Content-Type', 'application/json');
 
             redisClient.get(req.url, function (error, result) {
@@ -152,19 +156,25 @@ var main = function () {
 
                 if (result == null) {
 
-                        var query = { "ProductSKU": sku };
-            
-                        dbClient.db(externalDB).collection(productsCollection).find(query).toArray(function (err, result) {
+                        redisClient.get(req.headers['x-access-token'], function(error, customer_domain) {
+
+                            var query = { "ProductSKU": sku };
+
+                            dbClient.db(externalDB).collection(customer_domain + "." + productsCollection).find(query).toArray(function (err, result) {
             
            
-                            if (err) throw err;
-            
-                            redisClient.set(req.url, JSON.stringify(result));
-            
-                            res.json(result);
-                            res.end();
-            
-                        });
+                                if (err) throw err;
+                
+                                redisClient.set(req.url, JSON.stringify(result));
+                
+                                res.json(result);
+                                res.end();
+                
+                            });
+
+
+                        }); 
+           
 
                 } else {
 
@@ -209,36 +219,41 @@ var main = function () {
         (req, res) => {
 
             const product = new Product(req.body);
-            var query = { "ProductSKU": req.body.ProductSKU };
 
-            dbClient.db(externalDB).collection(productsCollection).find(query).toArray(function(err, result) {
+            redisClient.get(req.headers['x-access-token'], function(error, customer_domain) {
 
-                res.setHeader('Content-Type', 'application/json');
-                response = new Object();
+                var query = { "ProductSKU": req.body.ProductSKU };
 
-                if(result.length == 0) {
+                dbClient.db(externalDB).collection(customer_domain + "." + productsCollection).find(query).toArray(function(err, result) {
 
-                    dbClient.db(externalDB).collection(productsCollection).insertOne(product, function(err, result) {
+                        res.setHeader('Content-Type', 'application/json');
+                        response = new Object();
 
-                        if (err) throw err;
-                        response["responseCode"] = apiResponseCodeOk; 
-                        response["response"] = product;
-                        res.json(response);
-                        res.end();
+                        if(result.length == 0) {
+
+                            dbClient.db(externalDB).collection(customer_domain + "." + productsCollection).insertOne(product, function(err, result) {
+
+                                if (err) throw err;
+                                response["responseCode"] = apiResponseCodeOk; 
+                                response["response"] = product;
+                                res.json(response);
+                                res.end();
+                
+                            });
+
+
+
+                        }  else {
         
-                    });
+                            response["responseCode"] = apiResponseCodeInvalid; 
+                            response["responseMessage"] = "Product with the mentioned SKU already exists, if you want to update any field(s) please use the PUT HTTP method ...";
+                            res.json(response);
+                            res.end();
+            
+                        }  
 
 
-
-                }  else {
- 
-                    response["responseCode"] = apiResponseCodeInvalid; 
-                    response["responseMessage"] = "Product with the mentioned SKU already exists, if you want to update any field(s) please use the PUT HTTP method ...";
-                    res.json(response);
-                    res.end();
-    
-                }  
-
+                });
 
             });
 
@@ -276,49 +291,54 @@ var main = function () {
             const product = new Product(req.body);
             const dbProduct = null;
 
-            var query = { "ProductSKU": req.body.ProductSKU };
+            redisClient.get(req.headers['x-access-token'], function(error, customer_domain) {
 
-            dbClient.db(externalDB).collection(productsCollection).find(query).toArray(function(err, result) {
 
-                res.setHeader('Content-Type', 'application/json');
-                response = new Object();
+                    var query = { "ProductSKU": req.body.ProductSKU };
 
-                if(result.length == 0) {
+                    dbClient.db(externalDB).collection(customer_domain + "." + productsCollection).find(query).toArray(function(err, result) {
 
-                    dbClient.db(externalDB).collection(productsCollection).insertOne(product, function(err, result) {
+                        res.setHeader('Content-Type', 'application/json');
+                        response = new Object();
 
-                        if (err) throw err;
+                        if(result.length == 0) {
 
-                        response["responseCode"] = apiResponseCodeOk; 
-                        response["response"] = product;
-                        res.json(response);
-                        res.end(); 
+                            dbClient.db(externalDB).collection(customer_domain + "." + productsCollection).insertOne(product, function(err, result) {
+
+                                if (err) throw err;
+
+                                response["responseCode"] = apiResponseCodeOk; 
+                                response["response"] = product;
+                                res.json(response);
+                                res.end(); 
+
+                            });
+
+                        }  else {
+
+                            product["_id"] = result[0]["_id"];
+                            console.log(product);
+
+                            dbClient.db(externalDB).collection(customer_domain + "." + productsCollection).updateOne(query, product, function(err, result) {
+                                
+                                if (err) throw err;
+                                
+                                response["responseCode"] = apiResponseCodeOk; 
+                                response["responseMessage"] = "Product Updated";
+                                response["response"] = product;
+                                res.json(response);
+                                res.end();
+
+                            });
+
+
+
+                        }  
+
 
                     });
 
-                }  else {
-
-                    product["_id"] = result[0]["_id"];
-                    console.log(product);
-
-                    dbClient.db(externalDB).collection(productsCollection).updateOne(query, product, function(err, result) {
-                        
-                        if (err) throw err;
-                        
-                        response["responseCode"] = apiResponseCodeOk; 
-                        response["responseMessage"] = "Product Updated";
-                        response["response"] = product;
-                        res.json(response);
-                        res.end();
-
-                    });
-
-
-
-                }  
-
-
-            });
+            });        
 
     });
 
@@ -335,21 +355,24 @@ var main = function () {
 
         (req, res) => {
 
-            let sku = req.params.SKU;
-            res.setHeader('Content-Type', 'application/json');
+            redisClient.get(req.headers['x-access-token'], function(error, customer_domain) {
 
-            var query = { "ProductSKU": sku };
 
-            response = new Object();
+                    let sku = req.params.SKU;
+                    res.setHeader('Content-Type', 'application/json');
+                    var query = { "ProductSKU": sku };
+                    response = new Object();
 
-            dbClient.db(externalDB).collection(productsCollection).deleteOne(query, function(err, result) {
-                if (err) throw err;
+                    dbClient.db(externalDB).collection(customer_domain + "." + productsCollection).deleteOne(query, function(err, result) {
+                        if (err) throw err;
 
-                response["responseCode"] = apiResponseCodeOk; 
-                response["responseMessage"] = "Product Deleted";
+                        response["responseCode"] = apiResponseCodeOk; 
+                        response["responseMessage"] = "Product Deleted";
 
-                res.json(response);
-                res.end();
+                        res.json(response);
+                        res.end();
+
+                    });
 
             });
         
