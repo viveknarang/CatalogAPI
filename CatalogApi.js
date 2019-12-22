@@ -133,7 +133,7 @@ var main = function () {
             let sku = req.params.SKU;
             res.setHeader('Content-Type', 'application/json');
 
-            client.get(sku, function (error, result) {
+            client.get(req.url, function (error, result) {
 
                 if (error) {
                     console.log(error);
@@ -152,7 +152,7 @@ var main = function () {
            
                             if (err) throw err;
             
-                            client.set(sku, JSON.stringify(result));
+                            client.set(req.url, JSON.stringify(result));
             
                             res.json(result);
                             res.end();
@@ -229,7 +229,7 @@ var main = function () {
                 }  else {
  
                     response["responseCode"] = apiResponseCodeInvalid; 
-                    response["responseMessage"] = "Product with the mentioned SKU already exists, if you want to update any field(s) please use the update endpoint ...";
+                    response["responseMessage"] = "Product with the mentioned SKU already exists, if you want to update any field(s) please use the PUT HTTP method ...";
                     res.json(response);
                     res.end();
     
