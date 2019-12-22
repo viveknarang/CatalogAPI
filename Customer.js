@@ -13,6 +13,9 @@ const Customer = new Schema({
     CustomerPasscode: {
         type: String
     },
+    CustomerSecret: {
+        type: String
+    },
     Active: {
         type: Boolean
     },

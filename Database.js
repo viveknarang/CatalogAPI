@@ -8,14 +8,12 @@ let baseURL = properties.get('mongodb.url');
 let port = properties.get('mongodb.port');
 
 let databaseName = properties.get('mongodb.database');
-let collectionName = properties.get('mongodb.collection');
 
 var MongoClient = mongo.MongoClient;
 
 let url = "mongodb://" + baseURL + ":" + port + "/";
 
-var _db;
-var _collection;
+var _client;
 
 module.exports = {
 
@@ -25,19 +23,14 @@ module.exports = {
 
         MongoClient.connect(url, { useNewUrlParser: true }, function (err, client) {
 
-            _db = client.db(databaseName);
-            _collection = _db.collection(collectionName);
+            _client = client;
 
             return callback(err);
         });
     },
 
-    getDb: function () {
-        return _db;
+    getClient: function () {
+        return _client;
     },
-
-    getCollection: function () {
-        return _collection;
-    }
 
 };

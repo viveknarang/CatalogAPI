@@ -13,14 +13,18 @@ var redis = require('redis');
 
 var properties = PropertiesReader('CatalogAPI.properties');
 
-var WebAppPort = properties.get('api.port');
-let homepage = properties.get('API.homepage');
+var apiPort = properties.get('api.port');
+let homepage = properties.get('api.homepage');
 let catalogHomepage = properties.get('catalogAPI.homepage');
 let adminHomepage = properties.get('adminAPI.homepage');
-let customerCollection = properties.get('mongodb.internal.admin.collection');
+let customerCollection = properties.get('mongodb.collection.customers');
+let productsCollection = properties.get('mongodb.collection.products');
+let internalDB = properties.get('mongodb.internal.db');
+let externalDB = properties.get('mongodb.external.db');
+
 let redisHost = properties.get('redis.host');
 let redisPort = properties.get('redis.port');
-let jwtKey = properties.get('jwt.key');
+let jwtKey = properties.get('jwt.privateKey');
 let jwtTokenExpiry = properties.get('jwt.token.expiry');
 let apiResponseCodeOk = properties.get('api.response.code.ok');
 let apiResponseCodeInvalid = properties.get('api.response.code.invalid');
@@ -29,6 +33,7 @@ let apiVersion = properties.get('api.version');
 
 var client = redis.createClient(redisPort, redisHost);
 var app = express();
+
 app.use(compression());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -38,6 +43,9 @@ function authenticate(req, res, next) {
     let token = req.headers['x-access-token']; 
 
     jwt.verify(token, jwtKey, function (err, decoded) {
+
+        console.log(decoded["customerSecret"]);
+
         if (!err) {
             next();
         } else {
@@ -62,6 +70,7 @@ function validateInput(req, res, next) {
 
 var main = function () {
 
+    var dbClient = mongoUtil.getClient();    
 
     app.get('/', (req, res) => {
 
@@ -86,10 +95,9 @@ var main = function () {
         let cid = req.query.customerID;
         let passcode = req.query.passcode;   
         
-        var db = mongoUtil.getDb();    
         var query = { "CustomerID" : cid, "CustomerPasscode" : passcode };
     
-        db.collection(customerCollection).find(query).toArray(function (err, result) {
+        dbClient.db(internalDB).collection(customerCollection).find(query).toArray(function (err, result) {
 
 
             res.setHeader('Content-Type', 'application/json');
@@ -97,7 +105,7 @@ var main = function () {
 
             if(result.length == 1) {
 
-                var token = jwt.sign({ username: cid }, jwtKey, { expiresIn: jwtTokenExpiry });
+                var token = jwt.sign({ customerSecret: result[0]["CustomerSecret"] }, jwtKey, { expiresIn: jwtTokenExpiry });
                 response["token"] = token; 
                 response["validFor"] = jwtTokenExpiry;
                 response["responseCode"] = apiResponseCodeOk; 
@@ -118,6 +126,7 @@ var main = function () {
 
     
     });
+
 
     app.get('/catalog/'+ apiVersion +'/product/:SKU',
 
@@ -143,12 +152,9 @@ var main = function () {
 
                 if (result == null) {
 
-                        var db = mongoUtil.getDb();
-                        var collection = mongoUtil.getCollection();
-            
                         var query = { "ProductSKU": sku };
             
-                        collection.find(query).toArray(function (err, result) {
+                        dbClient.db(externalDB).collection(productsCollection).find(query).toArray(function (err, result) {
             
            
                             if (err) throw err;
@@ -203,19 +209,16 @@ var main = function () {
         (req, res) => {
 
             const product = new Product(req.body);
-            var db = mongoUtil.getDb();
-            var collection = mongoUtil.getCollection();
-
             var query = { "ProductSKU": req.body.ProductSKU };
 
-            collection.find(query).toArray(function(err, result) {
+            dbClient.db(externalDB).collection(productsCollection).find(query).toArray(function(err, result) {
 
                 res.setHeader('Content-Type', 'application/json');
                 response = new Object();
 
                 if(result.length == 0) {
 
-                    collection.insertOne(product, function(err, result) {
+                    dbClient.db(externalDB).collection(productsCollection).insertOne(product, function(err, result) {
 
                         if (err) throw err;
                         response["responseCode"] = apiResponseCodeOk; 
@@ -273,19 +276,16 @@ var main = function () {
             const product = new Product(req.body);
             const dbProduct = null;
 
-            var db = mongoUtil.getDb();
-            var collection = mongoUtil.getCollection();
-
             var query = { "ProductSKU": req.body.ProductSKU };
 
-            collection.find(query).toArray(function(err, result) {
+            dbClient.db(externalDB).collection(productsCollection).find(query).toArray(function(err, result) {
 
                 res.setHeader('Content-Type', 'application/json');
                 response = new Object();
 
                 if(result.length == 0) {
 
-                    collection.insertOne(product, function(err, result) {
+                    dbClient.db(externalDB).collection(productsCollection).insertOne(product, function(err, result) {
 
                         if (err) throw err;
 
@@ -301,7 +301,7 @@ var main = function () {
                     product["_id"] = result[0]["_id"];
                     console.log(product);
 
-                    collection.updateOne(query, product, function(err, result) {
+                    dbClient.db(externalDB).collection(productsCollection).updateOne(query, product, function(err, result) {
                         
                         if (err) throw err;
                         
@@ -340,11 +340,9 @@ var main = function () {
 
             var query = { "ProductSKU": sku };
 
-            var db = mongoUtil.getDb();
-            var collection = mongoUtil.getCollection();
             response = new Object();
 
-            collection.deleteOne(query, function(err, result) {
+            dbClient.db(externalDB).collection(productsCollection).deleteOne(query, function(err, result) {
                 if (err) throw err;
 
                 response["responseCode"] = apiResponseCodeOk; 
@@ -357,7 +355,9 @@ var main = function () {
         
     });
 
-    app.listen(WebAppPort, () => { console.log(`Listening port ${WebAppPort} ...`); });
+    
+
+    app.listen(apiPort, () => { console.log(`Listening port ${apiPort} ...`); });
 
 };
 
