@@ -31,7 +31,7 @@ let apiResponseCodeInvalid = properties.get('api.response.code.invalid');
 let apiResponseCodeError = properties.get('api.response.code.error');
 let apiVersion = properties.get('api.version');
 
-var client = redis.createClient(redisPort, redisHost);
+var redisClient = redis.createClient(redisPort, redisHost);
 var app = express();
 
 app.use(compression());
@@ -143,7 +143,7 @@ var main = function () {
             let sku = req.params.SKU;
             res.setHeader('Content-Type', 'application/json');
 
-            client.get(req.url, function (error, result) {
+            redisClient.get(req.url, function (error, result) {
 
                 if (error) {
                     console.log(error);
@@ -159,7 +159,7 @@ var main = function () {
            
                             if (err) throw err;
             
-                            client.set(req.url, JSON.stringify(result));
+                            redisClient.set(req.url, JSON.stringify(result));
             
                             res.json(result);
                             res.end();
