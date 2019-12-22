@@ -12,7 +12,12 @@ let adminHomepage = properties.get('adminAPI.homepage');
 let customerCollection = properties.get('mongodb.internal.admin.collection');
 let redisHost = properties.get('redis.host');
 let redisPort = properties.get('redis.port');
-let jwtChallenge = properties.get('jwt.challenge');
+let jwtKey = properties.get('jwt.key');
+let jwtTokenExpiry = properties.get('jwt.token.expiry');
+let apiResponseCodeOk = properties.get('api.response.code.ok');
+let apiResponseCodeInvalid = properties.get('api.response.code.invalid');
+let apiResponseCodeError = properties.get('api.response.code.error');
+
 
 var app = express();
 var mongoUtil = require('./Database');
@@ -34,12 +39,12 @@ function authenticate(req, res, next) {
 
     let token = req.headers['x-access-token']; 
 
-    jwt.verify(token, jwtChallenge, function (err, decoded) {
+    jwt.verify(token, jwtKey, function (err, decoded) {
         if (!err) {
             next();
         } else {
             return res.json({
-                responseCode: "INVALID",
+                responseCode: apiResponseCodeInvalid,
                 message: "The token is not valid!"
               });
         }
@@ -94,17 +99,16 @@ var main = function () {
 
             if(result.length == 1) {
 
-                var token = jwt.sign({ username: cid }, jwtChallenge, { expiresIn: 300 });
-                response["accessToken"] = token; 
-                response["validFor"] = "120";
-                response["validForUnit"] = "seconds";
-                response["responseCode"] = "OK"; 
+                var token = jwt.sign({ username: cid }, jwtKey, { expiresIn: jwtTokenExpiry });
+                response["token"] = token; 
+                response["validFor"] = jwtTokenExpiry;
+                response["responseCode"] = apiResponseCodeOk; 
                 response["responseMessage"] = "Access with valid credentials ...";
 
             
             } else {
 
-                response["responseCode"] = "INVALID"; 
+                response["responseCode"] = apiResponseCodeInvalid; 
                 response["responseMessage"] = "Invalid credentials ...";
 
             }
@@ -214,16 +218,20 @@ var main = function () {
                 if(result.length == 0) {
 
                     collection.insertOne(product, function(err, res) {
+
                         if (err) throw err;
-                        console.log("Document inserted");
+
+                        response["responseCode"] = apiResponseCodeOk; 
+                        response["response"] = product; 
+                        res.json(response);
+                        res.end();
+
                     });
 
-                    response["responseCode"] = "OK"; 
-                    response["response"] = product; 
 
                 }  else {
  
-                    response["responseCode"] = "INVALID"; 
+                    response["responseCode"] = apiResponseCodeInvalid; 
                     response["responseMessage"] = "Product with the mentioned SKU already exists, if you want to update any field(s) please use the update endpoint ...";
 
                 }  
