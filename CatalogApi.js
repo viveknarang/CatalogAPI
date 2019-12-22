@@ -12,6 +12,7 @@ let adminHomepage = properties.get('adminAPI.homepage');
 let customerCollection = properties.get('mongodb.internal.admin.collection');
 let redisHost = properties.get('redis.host');
 let redisPort = properties.get('redis.port');
+let jwtChallenge = properties.get('jwt.challenge');
 
 var app = express();
 var mongoUtil = require('./Database');
@@ -31,12 +32,16 @@ app.use(bodyParser.urlencoded({ extended: false }));
 
 function authenticate(req, res, next) {
 
-    var token = req.query.token;
-    jwt.verify(token, 'supersecret', function (err, decoded) {
+    let token = req.headers['x-access-token']; 
+
+    jwt.verify(token, jwtChallenge, function (err, decoded) {
         if (!err) {
             next();
         } else {
-            res.send(err);
+            return res.json({
+                responseCode: "INVALID",
+                message: "The token is not valid!"
+              });
         }
     });
 
@@ -89,7 +94,7 @@ var main = function () {
 
             if(result.length == 1) {
 
-                var token = jwt.sign({ username: "ado" }, 'supersecret', { expiresIn: 300 });
+                var token = jwt.sign({ username: cid }, jwtChallenge, { expiresIn: 300 });
                 response["accessToken"] = token; 
                 response["validFor"] = "120";
                 response["validForUnit"] = "seconds";
@@ -118,7 +123,7 @@ var main = function () {
             check('SKU').isLength({ min: 3 }).withMessage("SKU Value needs to be more than 3 characters ..."),
         ],
 
-        //authenticate,
+        authenticate,
 
         validateInput,
 
