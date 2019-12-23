@@ -7,6 +7,7 @@ var mongoUtil = require('./Database');
 var compression = require('compression');
 const { check, validationResult } = require('express-validator/check')
 const Product = require('./Product');
+const ProductGroup = require('./ProductGroup');
 var bodyParser = require('body-parser');
 var path = require("path");
 var redis = require('redis');
@@ -19,6 +20,8 @@ let catalogHomepage = properties.get('catalogAPI.homepage');
 let adminHomepage = properties.get('adminAPI.homepage');
 let customerCollection = properties.get('mongodb.collection.customers');
 let productsCollection = properties.get('mongodb.collection.products');
+let productGroupCollection = properties.get('mongodb.collection.productgroups');
+
 let internalDB = properties.get('mongodb.internal.db');
 let externalDB = properties.get('mongodb.external.db');
 
@@ -64,6 +67,89 @@ function validateInput(req, res, next) {
     }
 
     res.status(422).json({ errors: result.array() });
+}
+
+function createProductGroup(sdbClient, scollection, product) {
+
+    let psku = product["ProductSKU"];
+    let productMap = new Map();
+    productMap.set(psku, product);
+
+    let pg = new ProductGroup({ 
+
+                                ProductGroupID : product["ProductGroupID"], 
+                                RegularPriceRange : [product["RegularPrice"], product["RegularPrice"]],
+                                PromotionPriceRange : [product["PromotionPrice"], product["PromotionPrice"]],
+                                Active : product["Active"],
+                                GroupProducts : productMap,
+
+                              });
+
+    sdbClient.db(externalDB).collection(scollection).insertOne(pg, function(err, result) {
+
+        if (err) throw err;
+
+    });
+
+}
+
+function updateProductGroup(sdbClient, scollection, pgid, uProduct) {
+
+    var query = { "ProductGroupID" : pgid };
+    
+    sdbClient.db(externalDB).collection(scollection).find(query).toArray(function (err, result) {
+
+        if (err) throw err;
+
+        if (result != null && result.length == 1) {
+
+            let pg = new ProductGroup(result[0]);
+
+            pg["GroupProducts"].delete(uProduct["ProductSKU"]);
+            pg["GroupProducts"].set(uProduct["ProductSKU"], uProduct);
+
+            let nrpmin = Number.MAX_VALUE;;
+            let nrpmax = 0;
+            let nppmin = Number.MAX_VALUE;;
+            let nppmax = 0;
+
+            for (let product of pg["GroupProducts"].values()) {
+
+                if (product["RegularPrice"] > nrpmax) {
+                    nrpmax = product["RegularPrice"];
+                }
+                if (product["RegularPrice"] < nrpmin) {
+                    nrpmin = product["RegularPrice"];
+                }
+
+                if (product["PromotionPrice"] > nppmax) {
+                    nppmax = product["PromotionPrice"];
+                }
+
+                if (product["PromotionPrice"] < nppmin) {
+                    nppmin = product["PromotionPrice"];
+                }
+
+            }
+
+            pg["RegularPriceRange"][0] = nrpmin;
+            pg["RegularPriceRange"][1] = nrpmax;
+            
+            pg["PromotionPriceRange"][0] = nppmin;
+            pg["PromotionPriceRange"][1] = nppmax;
+ 
+            sdbClient.db(externalDB).collection(scollection).updateOne(query, pg, function(err, result) {
+                                
+                if (err) throw err;
+
+            });
+
+        } else {
+            return null;
+        }
+
+    });
+
 }
 
 var main = function () {
@@ -255,6 +341,17 @@ var main = function () {
                             dbClient.db(externalDB).collection(customer_domain + "." + productsCollection).insertOne(product, function(err, result) {
 
                                 if (err) throw err;
+
+                                let Gquery = { "ProductGroupID": product["ProductGroupID"] };
+
+                                dbClient.db(externalDB).collection(customer_domain + "." + productGroupCollection).find(Gquery).toArray(function (err, result) {
+
+                                        if (result.length != 1) {
+                                            createProductGroup(dbClient, customer_domain + "." + productGroupCollection, product);
+                                        } 
+
+                                });
+
                                 response["responseCode"] = apiResponseCodeOk; 
                                 response["response"] = product;
                                 res.json(response);
@@ -349,6 +446,16 @@ var main = function () {
 
                                 if (err) throw err;
 
+                                let Gquery = { "ProductGroupID": product["ProductGroupID"] };
+
+                                dbClient.db(externalDB).collection(customer_domain + "." + productGroupCollection).find(Gquery).toArray(function (err, result) {
+
+                                        if (result.length != 1) {
+                                            createProductGroup(dbClient, customer_domain + "." + productGroupCollection, product);
+                                        } 
+
+                                });
+
                                 response["responseCode"] = apiResponseCodeOk; 
                                 response["response"] = product;
                                 res.json(response);
@@ -366,6 +473,16 @@ var main = function () {
                                 
                                 redisClient.del(req.url + req.body.ProductSKU);
                                 redisClient.set(req.url + req.body.ProductSKU, JSON.stringify(product));
+
+                                let Gquery = { "ProductGroupID": product["ProductGroupID"] };
+
+                                dbClient.db(externalDB).collection(customer_domain + "." + productGroupCollection).find(Gquery).toArray(function (err, result) {
+
+                                        if (result.length == 1) {
+                                            updateProductGroup(dbClient, customer_domain + "." + productGroupCollection, product["ProductGroupID"], product);
+                                        } 
+
+                                });
                                 
                                 response["responseCode"] = apiResponseCodeOk; 
                                 response["responseMessage"] = "Product Updated";
