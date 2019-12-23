@@ -74,8 +74,9 @@ function createProductGroup(sdbClient, scollection, product) {
 
     let productMap = new Map();
 
-    subProduct = new Object()
+    subProduct = new Object();
 
+    subProduct.ProductSKU = product["ProductSKU"];
     subProduct.RegularPrice = product["RegularPrice"];
     subProduct.PromotionPrice = product["PromotionPrice"];
     subProduct.Images = product["Images"];
@@ -84,7 +85,6 @@ function createProductGroup(sdbClient, scollection, product) {
     subProduct.Active = product["Active"];
     subProduct.Category = product["Category"];
     subProduct.ProductAttributes = product["ProductAttributes"];
-    
 
     productMap.set(product["ProductSKU"], subProduct);
 
@@ -96,7 +96,9 @@ function createProductGroup(sdbClient, scollection, product) {
                                 RegularPriceRange : [product["RegularPrice"], product["RegularPrice"]],
                                 PromotionPriceRange : [product["PromotionPrice"], product["PromotionPrice"]],
                                 Active : product["Active"],
-                                GroupProducts : productMap,
+                                ProductSKUs : [product["ProductSKU"]],
+                                SearchKeywords : product["SearchKeywords"],
+                                Products : productMap,
 
                               });
 
@@ -120,13 +122,14 @@ function updateProductGroup(sdbClient, scollection, pgid, uProduct) {
 
             let pg = new ProductGroup(result[0]);
 
-            pg["GroupProducts"].delete(uProduct["ProductSKU"]);
+            pg["Products"].delete(uProduct["ProductSKU"]);
 
             let productName = uProduct["ProductName"];
             let productDescription = uProduct["ProductDescription"];
 
             subProduct = new Object()
 
+            subProduct.ProductSKU = uProduct["ProductSKU"];
             subProduct.RegularPrice = uProduct["RegularPrice"];
             subProduct.PromotionPrice = uProduct["PromotionPrice"];
             subProduct.Images = uProduct["Images"];
@@ -136,15 +139,17 @@ function updateProductGroup(sdbClient, scollection, pgid, uProduct) {
             subProduct.Category = uProduct["Category"];
             subProduct.ProductAttributes = uProduct["ProductAttributes"];
 
-            pg["GroupProducts"].set(uProduct["ProductSKU"], subProduct);
+            pg["Products"].set(uProduct["ProductSKU"], subProduct);
 
             let nrpmin = Number.MAX_VALUE;;
             let nrpmax = 0;
             let nppmin = Number.MAX_VALUE;;
             let nppmax = 0;
             let nActive = false;
+            let nSearchKeywords = [];
+            let nProductSKUs = [];
 
-            for (let product of pg["GroupProducts"].values()) {
+            for (let product of pg["Products"].values()) {
 
                 if (product["RegularPrice"] > nrpmax) {
                     nrpmax = product["RegularPrice"];
@@ -163,6 +168,9 @@ function updateProductGroup(sdbClient, scollection, pgid, uProduct) {
 
                 nActive = nActive || product["Active"];
 
+                nSearchKeywords.push(...product["SearchKeywords"]);
+                nProductSKUs.push(String(product["ProductSKU"]));
+
             }
 
             pg["RegularPriceRange"][0] = nrpmin;
@@ -175,6 +183,8 @@ function updateProductGroup(sdbClient, scollection, pgid, uProduct) {
 
             pg["ProductName"] = productName;
             pg["ProductDescription"] = productDescription;
+            pg["SearchKeywords"] = [...new Set(nSearchKeywords)];
+            pg["ProductSKUs"] = [...new Set(nProductSKUs)]; 
  
             sdbClient.db(externalDB).collection(scollection).updateOne(query, pg, function(err, result) {
                                 

@@ -22,7 +22,13 @@ const ProductGroup = new Schema({
     Active: {
         type: Boolean
     },
-    GroupProducts: {
+    ProductSKUs: {
+        type: Array
+    },
+    SearchKeywords: {
+        type: Array
+    },
+    Products: {
         type: Map
     }
 
