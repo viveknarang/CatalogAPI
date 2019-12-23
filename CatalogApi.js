@@ -206,19 +206,19 @@ var main = function () {
 
     app.get('/', (req, res) => {
 
-        res.sendFile(path.join(__dirname + '/' + homepage));
+        res.sendFile(path.join(__dirname + '/docs/' + homepage));
     
     });
     
     app.get('/catalog', (req, res) => {
     
-        res.sendFile(path.join(__dirname + '/' + catalogHomepage));
+        res.sendFile(path.join(__dirname + '/docs/' + catalogHomepage));
     
     });
     
     app.get('/admin', (req, res) => {
     
-        res.sendFile(path.join(__dirname + '/' + adminHomepage));
+        res.sendFile(path.join(__dirname + '/docs/' + adminHomepage));
     
     });
     
