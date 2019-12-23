@@ -71,13 +71,30 @@ function validateInput(req, res, next) {
 
 function createProductGroup(sdbClient, scollection, product) {
 
-    let psku = product["ProductSKU"];
+
     let productMap = new Map();
-    productMap.set(psku, product);
+
+    subProduct = new Object()
+
+    subProduct._id = product["_id"];
+    subProduct.ProductSKU = product["ProductSKU"];
+    subProduct.RegularPrice = product["RegularPrice"];
+    subProduct.PromotionPrice = product["PromotionPrice"];
+    subProduct.Images = product["Images"];
+    subProduct.SearchKeywords = product["SearchKeywords"];
+    subProduct.Quantity = product["Quantity"];
+    subProduct.Active = product["Active"];
+    subProduct.Category = product["Category"];
+    subProduct.ProductAttributes = product["ProductAttributes"];
+    
+
+    productMap.set(product["ProductSKU"], subProduct);
 
     let pg = new ProductGroup({ 
 
                                 ProductGroupID : product["ProductGroupID"], 
+                                ProductName : product["ProductName"],
+                                ProductDescription : product["ProductDescription"],
                                 RegularPriceRange : [product["RegularPrice"], product["RegularPrice"]],
                                 PromotionPriceRange : [product["PromotionPrice"], product["PromotionPrice"]],
                                 Active : product["Active"],
@@ -106,12 +123,21 @@ function updateProductGroup(sdbClient, scollection, pgid, uProduct) {
             let pg = new ProductGroup(result[0]);
 
             pg["GroupProducts"].delete(uProduct["ProductSKU"]);
+
+            let productName = uProduct["ProductName"];
+            let productDescription = uProduct["ProductDescription"];
+
+            delete uProduct["ProductName"];
+            delete uProduct["ProductDescription"];
+            delete uProduct["ProductGroupID"];
+
             pg["GroupProducts"].set(uProduct["ProductSKU"], uProduct);
 
             let nrpmin = Number.MAX_VALUE;;
             let nrpmax = 0;
             let nppmin = Number.MAX_VALUE;;
             let nppmax = 0;
+            let nActive = false;
 
             for (let product of pg["GroupProducts"].values()) {
 
@@ -130,6 +156,8 @@ function updateProductGroup(sdbClient, scollection, pgid, uProduct) {
                     nppmin = product["PromotionPrice"];
                 }
 
+                nActive = nActive || product["Active"];
+
             }
 
             pg["RegularPriceRange"][0] = nrpmin;
@@ -137,6 +165,11 @@ function updateProductGroup(sdbClient, scollection, pgid, uProduct) {
             
             pg["PromotionPriceRange"][0] = nppmin;
             pg["PromotionPriceRange"][1] = nppmax;
+
+            pg["Active"] = nActive;
+
+            pg["ProductName"] = productName;
+            pg["ProductDescription"] = productDescription;
  
             sdbClient.db(externalDB).collection(scollection).updateOne(query, pg, function(err, result) {
                                 
@@ -288,8 +321,8 @@ var main = function () {
             check('ProductGroupID').exists().withMessage("ProductGroupID should be present ..."),
             check('ProductGroupID').isLength({ min: 3 }).withMessage("ProductGroupID Value needs to be more than 3 characters ..."),
 
-            check('ProductDesription').exists().withMessage("ProductDesription should be present ..."),
-            check('ProductDesription').isLength({ min: 3 }).withMessage("ProductDesription Value needs to be more than 3 characters ..."),
+            check('ProductDescription').exists().withMessage("ProductDesription should be present ..."),
+            check('ProductDescription').isLength({ min: 3 }).withMessage("ProductDesription Value needs to be more than 3 characters ..."),
 
             check('RegularPrice').exists().withMessage("RegularPrice should be present ..."),
             check('RegularPrice').isDecimal().withMessage("RegularPrice should be numeric ..."),
@@ -390,8 +423,8 @@ var main = function () {
             check('ProductGroupID').exists().withMessage("ProductGroupID should be present ..."),
             check('ProductGroupID').isLength({ min: 3 }).withMessage("ProductGroupID Value needs to be more than 3 characters ..."),
 
-            check('ProductDesription').exists().withMessage("ProductDesription should be present ..."),
-            check('ProductDesription').isLength({ min: 3 }).withMessage("ProductDesription Value needs to be more than 3 characters ..."),
+            check('ProductDescription').exists().withMessage("ProductDesription should be present ..."),
+            check('ProductDescription').isLength({ min: 3 }).withMessage("ProductDesription Value needs to be more than 3 characters ..."),
 
             check('RegularPrice').exists().withMessage("RegularPrice should be present ..."),
             check('RegularPrice').isDecimal().withMessage("RegularPrice should be numeric ..."),

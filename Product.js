@@ -13,7 +13,7 @@ const Product = new Schema({
     ProductGroupID: {
         type: String
     },
-    ProductDesription: {
+    ProductDescription: {
         type: String
     },
     RegularPrice: {

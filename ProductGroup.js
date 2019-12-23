@@ -7,6 +7,12 @@ const ProductGroup = new Schema({
     ProductGroupID: {
         type: String
     },
+    ProductName: {
+        type: String
+    },
+    ProductDescription: {
+        type: String
+    },    
     RegularPriceRange: {
         type: Array
     },
@@ -14,7 +20,7 @@ const ProductGroup = new Schema({
         type: Array
     },
     Active: {
-        type: Map
+        type: Boolean
     },
     GroupProducts: {
         type: Map
