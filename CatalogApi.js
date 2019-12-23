@@ -396,7 +396,9 @@ var main = function () {
 
                                         if (result.length != 1) {
                                             createProductGroup(dbClient, customer_domain + "." + productGroupCollection, product);
-                                        } 
+                                        } else {
+                                            updateProductGroup(dbClient, customer_domain + "." + productGroupCollection, product["ProductGroupID"], product);
+                                        }
 
                                 });
 
@@ -500,6 +502,8 @@ var main = function () {
 
                                         if (result.length != 1) {
                                             createProductGroup(dbClient, customer_domain + "." + productGroupCollection, product);
+                                        } else {
+                                            updateProductGroup(dbClient, customer_domain + "." + productGroupCollection, product["ProductGroupID"], product);
                                         } 
 
                                 });
