@@ -371,7 +371,7 @@ var main = function () {
             check('Quantity').custom(RegularPrice => {
 
                 if (RegularPrice < 0) {
-                  throw new Error('RegularPrice cannot be less than 0 ...')
+                  throw new Error('Quantity cannot be less than 0 ...')
                 } else {
                     return true
                 }
