@@ -52,7 +52,7 @@ function authenticate(req, res, next) {
         } else {
             return res.json({
                 responseCode: apiResponseCodeInvalid,
-                message: "The token is not valid!"
+                message: "The token is not valid (anymore)! If you think that your token is expired please use the login endpoint to get a new token for your API calls ..."
               });
         }
     });
