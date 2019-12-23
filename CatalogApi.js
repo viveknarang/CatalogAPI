@@ -76,8 +76,6 @@ function createProductGroup(sdbClient, scollection, product) {
 
     subProduct = new Object()
 
-    subProduct._id = product["_id"];
-    subProduct.ProductSKU = product["ProductSKU"];
     subProduct.RegularPrice = product["RegularPrice"];
     subProduct.PromotionPrice = product["PromotionPrice"];
     subProduct.Images = product["Images"];
@@ -127,11 +125,18 @@ function updateProductGroup(sdbClient, scollection, pgid, uProduct) {
             let productName = uProduct["ProductName"];
             let productDescription = uProduct["ProductDescription"];
 
-            delete uProduct["ProductName"];
-            delete uProduct["ProductDescription"];
-            delete uProduct["ProductGroupID"];
+            subProduct = new Object()
 
-            pg["GroupProducts"].set(uProduct["ProductSKU"], uProduct);
+            subProduct.RegularPrice = uProduct["RegularPrice"];
+            subProduct.PromotionPrice = uProduct["PromotionPrice"];
+            subProduct.Images = uProduct["Images"];
+            subProduct.SearchKeywords = uProduct["SearchKeywords"];
+            subProduct.Quantity = uProduct["Quantity"];
+            subProduct.Active = uProduct["Active"];
+            subProduct.Category = uProduct["Category"];
+            subProduct.ProductAttributes = uProduct["ProductAttributes"];
+
+            pg["GroupProducts"].set(uProduct["ProductSKU"], subProduct);
 
             let nrpmin = Number.MAX_VALUE;;
             let nrpmax = 0;
