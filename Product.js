@@ -4,40 +4,40 @@ const Schema = mongoose.Schema;
 
 const Product = new Schema({
 
-    ProductSKU: {
+    sku: {
         type: String
     },
-    ProductName: {
+    name: {
         type: String
     },
-    ProductGroupID: {
+    groupID: {
         type: String
     },
-    ProductDescription: {
+    description: {
         type: String
     },
-    RegularPrice: {
+    regularPrice: {
         type: Number
     },
-    PromotionPrice: {
+    promotionPrice: {
         type: Number
     },
-    Images: {
+    images: {
         type: Map
     },
-    SearchKeywords: {
+    searchKeywords: {
         type: Array
     },
-    Quantity: {
+    quantity: {
         type: Number
     },
-    Active: {
+    active: {
         type: Boolean
     },
-    Category: {
+    category: {
         type: Array
     },
-    ProductAttributes: {
+    attributes: {
         type: Map
     }
 

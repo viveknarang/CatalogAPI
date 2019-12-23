@@ -13,7 +13,6 @@ var path = require("path");
 var redis = require('redis');
 
 var properties = PropertiesReader('CatalogAPI.properties');
-
 var apiPort = properties.get('api.port');
 let homepage = properties.get('api.homepage');
 let catalogHomepage = properties.get('catalogAPI.homepage');
@@ -21,10 +20,8 @@ let adminHomepage = properties.get('adminAPI.homepage');
 let customerCollection = properties.get('mongodb.collection.customers');
 let productsCollection = properties.get('mongodb.collection.products');
 let productGroupsCollection = properties.get('mongodb.collection.productgroups');
-
 let internalDB = properties.get('mongodb.internal.db');
 let externalDB = properties.get('mongodb.external.db');
-
 let redisHost = properties.get('redis.host');
 let redisPort = properties.get('redis.port');
 let jwtKey = properties.get('jwt.privateKey');
@@ -76,29 +73,29 @@ function createProductGroup(sdbClient, scollection, product) {
 
     subProduct = new Object();
 
-    subProduct.ProductSKU = product["ProductSKU"];
-    subProduct.RegularPrice = product["RegularPrice"];
-    subProduct.PromotionPrice = product["PromotionPrice"];
-    subProduct.Images = product["Images"];
-    subProduct.SearchKeywords = product["SearchKeywords"];
-    subProduct.Quantity = product["Quantity"];
-    subProduct.Active = product["Active"];
-    subProduct.Category = product["Category"];
-    subProduct.ProductAttributes = product["ProductAttributes"];
+    subProduct.sku = product["sku"];
+    subProduct.regularPrice = product["regularPrice"];
+    subProduct.promotionPrice = product["promotionPrice"];
+    subProduct.images = product["images"];
+    subProduct.searchKeywords = product["searchKeywords"];
+    subProduct.quantity = product["quantity"];
+    subProduct.active = product["active"];
+    subProduct.category = product["category"];
+    subProduct.attributes = product["attributes"];
 
-    productMap.set(product["ProductSKU"], subProduct);
+    productMap.set(product["sku"], subProduct);
 
     let pg = new ProductGroup({ 
 
-                                ProductGroupID : product["ProductGroupID"], 
-                                ProductName : product["ProductName"],
-                                ProductDescription : product["ProductDescription"],
-                                RegularPriceRange : [product["RegularPrice"], product["RegularPrice"]],
-                                PromotionPriceRange : [product["PromotionPrice"], product["PromotionPrice"]],
-                                Active : product["Active"],
-                                ProductSKUs : [product["ProductSKU"]],
-                                SearchKeywords : product["SearchKeywords"],
-                                Products : productMap,
+                                groupID : product["groupID"], 
+                                name : product["name"],
+                                description : product["description"],
+                                regularPriceRange : [product["regularPrice"], product["regularPrice"]],
+                                promotionPriceRange : [product["promotionPrice"], product["promotionPrice"]],
+                                active : product["active"],
+                                productSKUs : [product["sku"]],
+                                searchKeywords : product["searchKeywords"],
+                                products : productMap,
 
                               });
 
@@ -112,7 +109,7 @@ function createProductGroup(sdbClient, scollection, product) {
 
 function updateProductGroup(sdbClient, scollection, pgid, uProduct) {
 
-    var query = { "ProductGroupID" : pgid };
+    var query = { "groupID" : pgid };
     
     sdbClient.db(externalDB).collection(scollection).find(query).toArray(function (err, result) {
 
@@ -122,24 +119,24 @@ function updateProductGroup(sdbClient, scollection, pgid, uProduct) {
 
             let pg = new ProductGroup(result[0]);
 
-            pg["Products"].delete(uProduct["ProductSKU"]);
+            pg["products"].delete(uProduct["sku"]);
 
-            let productName = uProduct["ProductName"];
-            let productDescription = uProduct["ProductDescription"];
+            let productName = uProduct["name"];
+            let productDescription = uProduct["description"];
 
             subProduct = new Object()
 
-            subProduct.ProductSKU = uProduct["ProductSKU"];
-            subProduct.RegularPrice = uProduct["RegularPrice"];
-            subProduct.PromotionPrice = uProduct["PromotionPrice"];
-            subProduct.Images = uProduct["Images"];
-            subProduct.SearchKeywords = uProduct["SearchKeywords"];
-            subProduct.Quantity = uProduct["Quantity"];
-            subProduct.Active = uProduct["Active"];
-            subProduct.Category = uProduct["Category"];
-            subProduct.ProductAttributes = uProduct["ProductAttributes"];
+            subProduct.sku = uProduct["sku"];
+            subProduct.regularPrice = uProduct["regularPrice"];
+            subProduct.promotionPrice = uProduct["promotionPrice"];
+            subProduct.images = uProduct["images"];
+            subProduct.searchKeywords = uProduct["searchKeywords"];
+            subProduct.quantity = uProduct["quantity"];
+            subProduct.active = uProduct["active"];
+            subProduct.category = uProduct["category"];
+            subProduct.attributes = uProduct["attributes"];
 
-            pg["Products"].set(uProduct["ProductSKU"], subProduct);
+            pg["products"].set(uProduct["sku"], subProduct);
 
             let nrpmin = Number.MAX_VALUE;;
             let nrpmax = 0;
@@ -149,42 +146,42 @@ function updateProductGroup(sdbClient, scollection, pgid, uProduct) {
             let nSearchKeywords = [];
             let nProductSKUs = [];
 
-            for (let product of pg["Products"].values()) {
+            for (let product of pg["products"].values()) {
 
-                if (product["RegularPrice"] > nrpmax) {
-                    nrpmax = product["RegularPrice"];
+                if (product["regularPrice"] > nrpmax) {
+                    nrpmax = product["regularPrice"];
                 }
-                if (product["RegularPrice"] < nrpmin) {
-                    nrpmin = product["RegularPrice"];
-                }
-
-                if (product["PromotionPrice"] > nppmax) {
-                    nppmax = product["PromotionPrice"];
+                if (product["regularPrice"] < nrpmin) {
+                    nrpmin = product["regularPrice"];
                 }
 
-                if (product["PromotionPrice"] < nppmin) {
-                    nppmin = product["PromotionPrice"];
+                if (product["promotionPrice"] > nppmax) {
+                    nppmax = product["promotionPrice"];
                 }
 
-                nActive = nActive || product["Active"];
+                if (product["promotionPrice"] < nppmin) {
+                    nppmin = product["promotionPrice"];
+                }
 
-                nSearchKeywords.push(...product["SearchKeywords"]);
-                nProductSKUs.push(String(product["ProductSKU"]));
+                nActive = nActive || product["active"];
+
+                nSearchKeywords.push(...product["searchKeywords"]);
+                nProductSKUs.push(String(product["sku"]));
 
             }
 
-            pg["RegularPriceRange"][0] = nrpmin;
-            pg["RegularPriceRange"][1] = nrpmax;
+            pg["regularPriceRange"][0] = nrpmin;
+            pg["regularPriceRange"][1] = nrpmax;
             
-            pg["PromotionPriceRange"][0] = nppmin;
-            pg["PromotionPriceRange"][1] = nppmax;
+            pg["promotionPriceRange"][0] = nppmin;
+            pg["promotionPriceRange"][1] = nppmax;
 
-            pg["Active"] = nActive;
+            pg["active"] = nActive;
 
-            pg["ProductName"] = productName;
-            pg["ProductDescription"] = productDescription;
-            pg["SearchKeywords"] = [...new Set(nSearchKeywords)];
-            pg["ProductSKUs"] = [...new Set(nProductSKUs)]; 
+            pg["name"] = productName;
+            pg["description"] = productDescription;
+            pg["searchKeywords"] = [...new Set(nSearchKeywords)];
+            pg["productSKUs"] = [...new Set(nProductSKUs)]; 
  
             sdbClient.db(externalDB).collection(scollection).updateOne(query, pg, function(err, result) {
                                 
@@ -224,22 +221,23 @@ var main = function () {
     
     app.get('/admin/'+ apiVersion +'/customers/login/', function (req, res) {
     
-        let cid = req.query.customerID;
-        let passcode = req.query.passcode;   
+        let id = req.query.id;
+        let apiKey = req.query.apiKey;   
         
-        var query = { "CustomerID" : cid, "CustomerPasscode" : passcode };
+        var query = { "id" : id, "apiKey" : apiKey };
     
         dbClient.db(internalDB).collection(customerCollection).find(query).toArray(function (err, result) {
 
+            if (err) throw err;
 
             res.setHeader('Content-Type', 'application/json');
             response = new Object();
 
             if(result.length == 1) {
 
-                var token = jwt.sign({ customerSecret: result[0]["CustomerSecret"] }, jwtKey, { expiresIn: jwtTokenExpiry });
-                
-                redisClient.set(token, result[0]["CustomerName"] + "." + result[0]["CustomerSecret"]);
+                var token = jwt.sign({ secret : result[0]["secret"] }, jwtKey, { expiresIn: jwtTokenExpiry });
+
+                redisClient.set(token, result[0]["name"] + "." + result[0]["secret"]);
                 redisClient.expire(token, jwtTokenExpiry);
 
                 response["token"] = token; 
@@ -282,7 +280,6 @@ var main = function () {
             redisClient.get(req.url, function (error, cache_result) {
 
                 if (error) {
-                    console.log(error);
                     throw error;
                 }
 
@@ -290,12 +287,12 @@ var main = function () {
 
                         redisClient.get(req.headers['x-access-token'], function(error, customer_domain) {
 
-                            var query = { $or : [ {ProductSKUs : { $elemMatch : { $eq : id } } } , { ProductGroupID : id } ]};
+                            var query = { $or : [ {productSKUs : { $elemMatch : { $eq : id } } } , { groupID : id } ]};
 
                             dbClient.db(externalDB).collection(customer_domain + "." + productGroupsCollection).find(query).toArray(function (err, result) {
            
                                 if (err) throw err;
-               
+
                                 if (result.length == 1) {
                                     redisClient.set(req.url, JSON.stringify(result[0]));
                                     res.json(result[0]);
@@ -350,10 +347,9 @@ var main = function () {
 
                         redisClient.get(req.headers['x-access-token'], function(error, customer_domain) {
 
-                            var query = { "ProductSKU": sku };
+                            var query = { "sku": sku };
 
-                            dbClient.db(externalDB).collection(customer_domain + "." + productsCollection).find(query).toArray(function (err, result) {
-            
+                            dbClient.db(externalDB).collection(customer_domain + "." + productsCollection).find(query).toArray(function (err, result) {            
            
                                 if (err) throw err;
                
@@ -387,50 +383,50 @@ var main = function () {
     app.post('/catalog/'+ apiVersion +'/products',
 
         [
-            check('ProductSKU').exists().withMessage("ProductSKU should be present ..."),
-            check('ProductSKU').isLength({ min: 3 }).withMessage("ProductSKU Value needs to be more than 3 characters ..."),
+            check('sku').exists().withMessage("SKU should be present ..."),
+            check('sku').isLength({ min: 3 }).withMessage("SKU Value needs to be more than 3 characters ..."),
 
-            check('ProductName').exists().withMessage("ProductName should be present ..."),
-            check('ProductName').isLength({ min: 3 }).withMessage("ProductName Value needs to be more than 3 characters ..."),
+            check('name').exists().withMessage("Product Name should be present ..."),
+            check('name').isLength({ min: 3 }).withMessage("Product Name Value needs to be more than 3 characters ..."),
 
-            check('ProductGroupID').exists().withMessage("ProductGroupID should be present ..."),
-            check('ProductGroupID').isLength({ min: 3 }).withMessage("ProductGroupID Value needs to be more than 3 characters ..."),
+            check('groupID').exists().withMessage("Product Group ID should be present ..."),
+            check('groupID').isLength({ min: 3 }).withMessage("Product Group ID Value needs to be more than 3 characters ..."),
 
-            check('ProductDescription').exists().withMessage("ProductDesription should be present ..."),
-            check('ProductDescription').isLength({ min: 3 }).withMessage("ProductDesription Value needs to be more than 3 characters ..."),
+            check('description').exists().withMessage("Product Desription should be present ..."),
+            check('description').isLength({ min: 3 }).withMessage("Product Desription Value needs to be more than 3 characters ..."),
 
-            check('RegularPrice').exists().withMessage("RegularPrice should be present ..."),
-            check('RegularPrice').isDecimal().withMessage("RegularPrice should be numeric ..."),
+            check('regularPrice').exists().withMessage("Regular Price should be present ..."),
+            check('regularPrice').isDecimal().withMessage("Regular Price should be numeric ..."),
             
-            check('RegularPrice').custom(RegularPrice => {
+            check('regularPrice').custom(regularPrice => {
 
-                if (RegularPrice < 0) {
-                  throw new Error('Quantity cannot be less than 0 ...')
+                if (regularPrice < 0) {
+                  throw new Error('Regular Price cannot be less than 0 ...')
                 } else {
                     return true
                 }
 
             }),
 
-            check('PromotionPrice').exists().withMessage("PromotionPrice should be present ..."),
-            check('PromotionPrice').isDecimal().withMessage("PromotionPrice should be numeric ..."),   
+            check('promotionPrice').exists().withMessage("Promotion Price should be present ..."),
+            check('promotionPrice').isDecimal().withMessage("Promotion Price should be numeric ..."),   
             
-            check('PromotionPrice').custom(PromotionPrice => {
+            check('promotionPrice').custom(promotionPrice => {
 
-                if (PromotionPrice < 0) {
-                  throw new Error('PromotionPrice cannot be less than 0 ...')
+                if (promotionPrice < 0) {
+                  throw new Error('Promotion Price cannot be less than 0 ...')
                 } else {
                     return true
                 }
 
             }),
 
-            check('Quantity').exists().withMessage("Quantity should be present ..."),
-            check('Quantity').isInt().withMessage("Quantity should be integer ..."),
+            check('quantity').exists().withMessage("Quantity should be present ..."),
+            check('quantity').isInt().withMessage("Quantity should be integer ..."),
             
-            check('Quantity').custom(RegularPrice => {
+            check('quantity').custom(quantity => {
 
-                if (RegularPrice < 0) {
+                if (quantity < 0) {
                   throw new Error('Quantity cannot be less than 0 ...')
                 } else {
                     return true
@@ -450,9 +446,11 @@ var main = function () {
 
             redisClient.get(req.headers['x-access-token'], function(error, customer_domain) {
 
-                var query = { "ProductSKU": req.body.ProductSKU };
+                var query = { "sku": req.body.sku };
 
                 dbClient.db(externalDB).collection(customer_domain + "." + productsCollection).find(query).toArray(function(err, result) {
+
+                    if (err) throw err;
 
                         res.setHeader('Content-Type', 'application/json');
                         response = new Object();
@@ -463,14 +461,16 @@ var main = function () {
 
                                 if (err) throw err;
 
-                                let Gquery = { "ProductGroupID": product["ProductGroupID"] };
+                                let Gquery = { "groupID": product["groupID"] };
 
                                 dbClient.db(externalDB).collection(customer_domain + "." + productGroupsCollection).find(Gquery).toArray(function (err, result) {
+
+                                    if (err) throw err;
 
                                         if (result.length != 1) {
                                             createProductGroup(dbClient, customer_domain + "." + productGroupsCollection, product);
                                         } else {
-                                            updateProductGroup(dbClient, customer_domain + "." + productGroupsCollection, product["ProductGroupID"], product);
+                                            updateProductGroup(dbClient, customer_domain + "." + productGroupsCollection, product["groupID"], product);
                                         }
 
                                 });
@@ -487,7 +487,7 @@ var main = function () {
                         }  else {
         
                             response["responseCode"] = apiResponseCodeInvalid; 
-                            response["responseMessage"] = "Product with the mentioned SKU already exists, if you want to update any field(s) please use the PUT HTTP method ...";
+                            response["responseMessage"] = "Product with the mentioned SKU already exists, if you want to update any field(s) please use the PUT method ...";
                             res.json(response);
                             res.end();
             
@@ -504,50 +504,50 @@ var main = function () {
     app.put('/catalog/'+ apiVersion +'/products',
 
         [
-            check('ProductSKU').exists().withMessage("ProductSKU should be present ..."),
-            check('ProductSKU').isLength({ min: 3 }).withMessage("ProductSKU Value needs to be more than 3 characters ..."),
+            check('sku').exists().withMessage("SKU should be present ..."),
+            check('sku').isLength({ min: 3 }).withMessage("SKU Value needs to be more than 3 characters ..."),
 
-            check('ProductName').exists().withMessage("ProductName should be present ..."),
-            check('ProductName').isLength({ min: 3 }).withMessage("ProductName Value needs to be more than 3 characters ..."),
+            check('name').exists().withMessage("Product Name should be present ..."),
+            check('name').isLength({ min: 3 }).withMessage("Product Name Value needs to be more than 3 characters ..."),
 
-            check('ProductGroupID').exists().withMessage("ProductGroupID should be present ..."),
-            check('ProductGroupID').isLength({ min: 3 }).withMessage("ProductGroupID Value needs to be more than 3 characters ..."),
+            check('groupID').exists().withMessage("Product Group ID should be present ..."),
+            check('groupID').isLength({ min: 3 }).withMessage("Product Group ID Value needs to be more than 3 characters ..."),
 
-            check('ProductDescription').exists().withMessage("ProductDesription should be present ..."),
-            check('ProductDescription').isLength({ min: 3 }).withMessage("ProductDesription Value needs to be more than 3 characters ..."),
+            check('description').exists().withMessage("Product Desription should be present ..."),
+            check('description').isLength({ min: 3 }).withMessage("Product Desription Value needs to be more than 3 characters ..."),
 
-            check('RegularPrice').exists().withMessage("RegularPrice should be present ..."),
-            check('RegularPrice').isDecimal().withMessage("RegularPrice should be numeric ..."),
+            check('regularPrice').exists().withMessage("Regular Price should be present ..."),
+            check('regularPrice').isDecimal().withMessage("Regular Price should be numeric ..."),
+            
+            check('regularPrice').custom(regularPrice => {
 
-            check('RegularPrice').custom(RegularPrice => {
-
-                if (RegularPrice < 0) {
-                  throw new Error('RegularPrice cannot be less than 0 ...')
+                if (regularPrice < 0) {
+                  throw new Error('Regular Price cannot be less than 0 ...')
                 } else {
                     return true
                 }
 
             }),
 
-            check('PromotionPrice').exists().withMessage("PromotionPrice should be present ..."),
-            check('PromotionPrice').isDecimal().withMessage("PromotionPrice should be numeric ..."),   
+            check('promotionPrice').exists().withMessage("Promotion Price should be present ..."),
+            check('promotionPrice').isDecimal().withMessage("Promotion Price should be numeric ..."),   
             
-            check('PromotionPrice').custom(PromotionPrice => {
+            check('promotionPrice').custom(promotionPrice => {
 
-                if (PromotionPrice < 0) {
-                  throw new Error('PromotionPrice cannot be less than 0 ...')
+                if (promotionPrice < 0) {
+                  throw new Error('Promotion Price cannot be less than 0 ...')
                 } else {
                     return true
                 }
 
             }),
 
-            check('Quantity').exists().withMessage("Quantity should be present ..."),
-            check('Quantity').isInt().withMessage("Quantity should be integer ..."),
+            check('quantity').exists().withMessage("Quantity should be present ..."),
+            check('quantity').isInt().withMessage("Quantity should be integer ..."),
             
-            check('Quantity').custom(RegularPrice => {
+            check('quantity').custom(quantity => {
 
-                if (RegularPrice < 0) {
+                if (quantity < 0) {
                   throw new Error('Quantity cannot be less than 0 ...')
                 } else {
                     return true
@@ -570,9 +570,11 @@ var main = function () {
             redisClient.get(req.headers['x-access-token'], function(error, customer_domain) {
 
 
-                    var query = { "ProductSKU": req.body.ProductSKU };
+                    var query = { "sku": req.body.sku };
 
                     dbClient.db(externalDB).collection(customer_domain + "." + productsCollection).find(query).toArray(function(err, result) {
+
+                        if (err) throw err;
 
                         res.setHeader('Content-Type', 'application/json');
                         response = new Object();
@@ -583,14 +585,16 @@ var main = function () {
 
                                 if (err) throw err;
 
-                                let Gquery = { "ProductGroupID": product["ProductGroupID"] };
+                                let Gquery = { "groupID": product["groupID"] };
 
-                                dbClient.db(externalDB).collection(customer_domain + "." + productGroupCollection).find(Gquery).toArray(function (err, result) {
+                                dbClient.db(externalDB).collection(customer_domain + "." + productGroupsCollection).find(Gquery).toArray(function (err, result) {
+
+                                    if (err) throw err;
 
                                         if (result.length != 1) {
-                                            createProductGroup(dbClient, customer_domain + "." + productGroupCollection, product);
+                                            createProductGroup(dbClient, customer_domain + "." + productGroupsCollection, product);
                                         } else {
-                                            updateProductGroup(dbClient, customer_domain + "." + productGroupCollection, product["ProductGroupID"], product);
+                                            updateProductGroup(dbClient, customer_domain + "." + productGroupsCollection, product["groupID"], product);
                                         } 
 
                                 });
@@ -610,15 +614,17 @@ var main = function () {
                                 
                                 if (err) throw err;
                                 
-                                redisClient.del(req.url + req.body.ProductSKU);
-                                redisClient.set(req.url + req.body.ProductSKU, JSON.stringify(product));
+                                redisClient.del(req.url + req.body.sku);
+                                redisClient.set(req.url + req.body.sku, JSON.stringify(product));
 
-                                let Gquery = { "ProductGroupID": product["ProductGroupID"] };
+                                let Gquery = { "groupID": product["groupID"] };
 
-                                dbClient.db(externalDB).collection(customer_domain + "." + productGroupCollection).find(Gquery).toArray(function (err, result) {
+                                dbClient.db(externalDB).collection(customer_domain + "." + productGroupsCollection).find(Gquery).toArray(function (err, result) {
+
+                                    if (err) throw err;
 
                                         if (result.length == 1) {
-                                            updateProductGroup(dbClient, customer_domain + "." + productGroupCollection, product["ProductGroupID"], product);
+                                            updateProductGroup(dbClient, customer_domain + "." + productGroupsCollection, product["groupID"], product);
                                         } 
 
                                 });
@@ -660,16 +666,17 @@ var main = function () {
 
                     let sku = req.params.SKU;
                     res.setHeader('Content-Type', 'application/json');
-                    var query = { "ProductSKU": sku };
+                    var query = { "sku" : sku };
                     response = new Object();
 
                     dbClient.db(externalDB).collection(customer_domain + "." + productsCollection).deleteOne(query, function(err, result) {
-                        if (err) throw err;
 
+                        if (err) throw err;
+                        
                         redisClient.del(req.url);
 
                         response["responseCode"] = apiResponseCodeOk; 
-                        response["responseMessage"] = "Product Deleted";
+                        response["responseMessage"] = "Product Deleted ...";
 
                         res.json(response);
                         res.end();
@@ -697,15 +704,15 @@ var main = function () {
 
                     let pgid = req.params.PGID;
                     res.setHeader('Content-Type', 'application/json');
-                    var query = { "ProductGroupID": pgid };
+                    var query = { "groupID": pgid };
 
                     dbClient.db(externalDB).collection(customer_domain + "." + productGroupsCollection).find(query).toArray(function (err, result) {
 
                         if (err) throw err;
 
-                        let pskus = result[0]["ProductSKUs"];
+                        let pskus = result[0]["productSKUs"];
 
-                        var pdelQuery = {'ProductSKU': { '$in' : pskus }};
+                        var pdelQuery = {'sku': { '$in' : pskus }};
 
                         dbClient.db(externalDB).collection(customer_domain + "." + productsCollection).deleteOne(pdelQuery, function(err, result) {
 

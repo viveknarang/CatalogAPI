@@ -4,22 +4,22 @@ const Schema = mongoose.Schema;
 
 const Customer = new Schema({
 
-    CustomerID: {
+    id: {
         type: String
     },
-    CustomerName: {
+    name: {
         type: String
     },
-    CustomerPasscode: {
+    apiKey: {
         type: String
     },
-    CustomerSecret: {
+    secret: {
         type: String
     },
-    Active: {
+    active: {
         type: Boolean
     },
-    CustomerAttributes: {
+    attributes: {
         type: Map
     }
 

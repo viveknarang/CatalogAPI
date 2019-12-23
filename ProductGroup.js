@@ -4,31 +4,31 @@ const Schema = mongoose.Schema;
 
 const ProductGroup = new Schema({
 
-    ProductGroupID: {
+    groupID: {
         type: String
     },
-    ProductName: {
+    name: {
         type: String
     },
-    ProductDescription: {
+    description: {
         type: String
     },    
-    RegularPriceRange: {
+    regularPriceRange: {
         type: Array
     },
-    PromotionPriceRange: {
+    promotionPriceRange: {
         type: Array
     },
-    Active: {
+    active: {
         type: Boolean
     },
-    ProductSKUs: {
+    productSKUs: {
         type: Array
     },
-    SearchKeywords: {
+    searchKeywords: {
         type: Array
     },
-    Products: {
+    products: {
         type: Map
     }
 
