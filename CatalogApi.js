@@ -465,12 +465,12 @@ var main = function () {
 
                                 let Gquery = { "ProductGroupID": product["ProductGroupID"] };
 
-                                dbClient.db(externalDB).collection(customer_domain + "." + productGroupCollection).find(Gquery).toArray(function (err, result) {
+                                dbClient.db(externalDB).collection(customer_domain + "." + productGroupsCollection).find(Gquery).toArray(function (err, result) {
 
                                         if (result.length != 1) {
-                                            createProductGroup(dbClient, customer_domain + "." + productGroupCollection, product);
+                                            createProductGroup(dbClient, customer_domain + "." + productGroupsCollection, product);
                                         } else {
-                                            updateProductGroup(dbClient, customer_domain + "." + productGroupCollection, product["ProductGroupID"], product);
+                                            updateProductGroup(dbClient, customer_domain + "." + productGroupsCollection, product["ProductGroupID"], product);
                                         }
 
                                 });
@@ -680,6 +680,62 @@ var main = function () {
         
     });
 
+    app.delete('/catalog/'+ apiVersion +'/productgroup/:PGID',
+
+        [
+            check('PGID').exists().withMessage("PGID should be present ..."),
+        ],
+
+        authenticate,
+
+        validateInput,
+
+        (req, res) => {
+
+            redisClient.get(req.headers['x-access-token'], function(error, customer_domain) {
+
+
+                    let pgid = req.params.PGID;
+                    res.setHeader('Content-Type', 'application/json');
+                    var query = { "ProductGroupID": pgid };
+
+                    dbClient.db(externalDB).collection(customer_domain + "." + productGroupsCollection).find(query).toArray(function (err, result) {
+
+                        if (err) throw err;
+
+                        let pskus = result[0]["ProductSKUs"];
+
+                        var pdelQuery = {'ProductSKU': { '$in' : pskus }};
+
+                        dbClient.db(externalDB).collection(customer_domain + "." + productsCollection).deleteOne(pdelQuery, function(err, result) {
+
+                            if (err) throw err;
+
+                                dbClient.db(externalDB).collection(customer_domain + "." + productGroupsCollection).deleteOne(query, function(err, result) {
+                                    
+                                    if (err) throw err;
+
+                                    redisClient.del(req.url);
+
+                                    response = new Object();
+                                    response["responseCode"] = apiResponseCodeOk; 
+                                    response["responseMessage"] = "Product group is now deleted ...";
+
+                                    res.json(response);
+                                    res.end();
+
+                                });
+
+
+                            });
+
+
+                        });
+
+
+            });
+        
+    });    
     
 
     app.listen(apiPort, () => { console.log(`Listening port ${apiPort} ...`); });
