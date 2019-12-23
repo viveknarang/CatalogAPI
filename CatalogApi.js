@@ -222,7 +222,7 @@ var main = function () {
     
     });
     
-    app.get('/admin/'+ apiVersion +'/customer/login/', function (req, res) {
+    app.get('/admin/'+ apiVersion +'/customers/login/', function (req, res) {
     
         let cid = req.query.customerID;
         let passcode = req.query.passcode;   
@@ -263,7 +263,7 @@ var main = function () {
     });
 
 
-    app.get('/catalog/'+ apiVersion +'/productgroup/:ID',
+    app.get('/catalog/'+ apiVersion +'/productgroups/:ID',
 
         [
             check('ID').exists().withMessage("ID should be present ..."),
@@ -323,7 +323,7 @@ var main = function () {
     });
 
 
-    app.get('/catalog/'+ apiVersion +'/product/:SKU',
+    app.get('/catalog/'+ apiVersion +'/products/:SKU',
 
         [
             check('SKU').exists().withMessage("SKU should be present ..."),
@@ -384,7 +384,7 @@ var main = function () {
     });
 
 
-    app.post('/catalog/'+ apiVersion +'/product',
+    app.post('/catalog/'+ apiVersion +'/products',
 
         [
             check('ProductSKU').exists().withMessage("ProductSKU should be present ..."),
@@ -501,7 +501,7 @@ var main = function () {
     });
 
     
-    app.put('/catalog/'+ apiVersion +'/product',
+    app.put('/catalog/'+ apiVersion +'/products',
 
         [
             check('ProductSKU').exists().withMessage("ProductSKU should be present ..."),
@@ -643,7 +643,7 @@ var main = function () {
     });
 
 
-    app.delete('/catalog/'+ apiVersion +'/product/:SKU',
+    app.delete('/catalog/'+ apiVersion +'/products/:SKU',
 
         [
             check('SKU').exists().withMessage("SKU should be present ..."),
@@ -680,7 +680,7 @@ var main = function () {
         
     });
 
-    app.delete('/catalog/'+ apiVersion +'/productgroup/:PGID',
+    app.delete('/catalog/'+ apiVersion +'/productgroups/:PGID',
 
         [
             check('PGID').exists().withMessage("PGID should be present ..."),
