@@ -20,7 +20,7 @@ let catalogHomepage = properties.get('catalogAPI.homepage');
 let adminHomepage = properties.get('adminAPI.homepage');
 let customerCollection = properties.get('mongodb.collection.customers');
 let productsCollection = properties.get('mongodb.collection.products');
-let productGroupCollection = properties.get('mongodb.collection.productgroups');
+let productGroupsCollection = properties.get('mongodb.collection.productgroups');
 
 let internalDB = properties.get('mongodb.internal.db');
 let externalDB = properties.get('mongodb.external.db');
@@ -260,6 +260,66 @@ var main = function () {
         });
 
     
+    });
+
+
+    app.get('/catalog/'+ apiVersion +'/productgroup/:ID',
+
+        [
+            check('ID').exists().withMessage("ID should be present ..."),
+        ],
+
+        authenticate,
+
+        validateInput,
+
+        (req, res) => {
+
+            let id = req.params.ID;
+
+            res.setHeader('Content-Type', 'application/json');
+
+            redisClient.get(req.url, function (error, cache_result) {
+
+                if (error) {
+                    console.log(error);
+                    throw error;
+                }
+
+                if (cache_result == null || cache_result.length == 0) {
+
+                        redisClient.get(req.headers['x-access-token'], function(error, customer_domain) {
+
+                            var query = { $or : [ {ProductSKUs : { $elemMatch : { $eq : id } } } , { ProductGroupID : id } ]};
+
+                            dbClient.db(externalDB).collection(customer_domain + "." + productGroupsCollection).find(query).toArray(function (err, result) {
+           
+                                if (err) throw err;
+               
+                                if (result.length == 1) {
+                                    redisClient.set(req.url, JSON.stringify(result[0]));
+                                    res.json(result[0]);
+                                }
+
+                                res.end();
+                
+                            });
+
+
+                        }); 
+           
+
+                } else {
+
+                            res.json(JSON.parse(cache_result));
+                            res.end();
+
+                }
+
+
+            });
+
+
     });
 
 
