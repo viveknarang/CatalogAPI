@@ -373,8 +373,9 @@ var main = function () {
                         redisClient.get(req.headers['x-access-token'], function(error, customer_domain) {
 
                             var query = { $or : [ {productSKUs : { $elemMatch : { $eq : id } } } , { groupID : id } ]};
+                            let pgcollection = customer_domain + "." + productGroupsCollection;
 
-                            dbClient.db(externalDB).collection(customer_domain + "." + productGroupsCollection).find(query).toArray(function (err, result) {
+                            dbClient.db(externalDB).collection(pgcollection).find(query).toArray(function (err, result) {
            
                                 if (err) throw err;
 
@@ -433,8 +434,9 @@ var main = function () {
                         redisClient.get(req.headers['x-access-token'], function(error, customer_domain) {
 
                             var query = { "sku": sku };
+                            let pcollection = customer_domain + "." + productsCollection;
 
-                            dbClient.db(externalDB).collection(customer_domain + "." + productsCollection).find(query).toArray(function (err, result) {            
+                            dbClient.db(externalDB).collection(pcollection).find(query).toArray(function (err, result) {            
            
                                 if (err) throw err;
                
@@ -532,8 +534,10 @@ var main = function () {
             redisClient.get(req.headers['x-access-token'], function(error, customer_domain) {
 
                 var query = { "sku": req.body.sku };
+                let pcollection = customer_domain + "." + productsCollection;
+                let pgcollection = customer_domain + "." + productGroupsCollection;
 
-                dbClient.db(externalDB).collection(customer_domain + "." + productsCollection).find(query).toArray(function(err, result) {
+                dbClient.db(externalDB).collection(pcollection).find(query).toArray(function(err, result) {
 
                     if (err) throw err;
 
@@ -542,20 +546,20 @@ var main = function () {
 
                         if(result.length == 0) {
 
-                            dbClient.db(externalDB).collection(customer_domain + "." + productsCollection).insertOne(product, function(err, result) {
+                            dbClient.db(externalDB).collection(pcollection).insertOne(product, function(err, result) {
 
                                 if (err) throw err;
 
                                 let Gquery = { "groupID": product["groupID"] };
 
-                                dbClient.db(externalDB).collection(customer_domain + "." + productGroupsCollection).find(Gquery).toArray(function (err, result) {
+                                dbClient.db(externalDB).collection(pgcollection).find(Gquery).toArray(function (err, result) {
 
                                     if (err) throw err;
 
                                         if (result.length != 1) {
-                                            createProductGroup(dbClient, customer_domain + "." + productGroupsCollection, product);
+                                            createProductGroup(dbClient, pgcollection, product);
                                         } else {
-                                            updateProductGroup(dbClient, customer_domain + "." + productGroupsCollection, product["groupID"], product);
+                                            updateProductGroup(dbClient, pgcollection, product["groupID"], product);
                                         }
 
                                 });
@@ -652,12 +656,15 @@ var main = function () {
             const product = new Product(req.body);
             const dbProduct = null;
 
-            redisClient.get(req.headers['x-access-token'], function(error, customer_domain) {
+            redisClient.get(req.headers['x-access-token'], function(err, customer_domain) {
 
+                if (err) throw err;
 
                     var query = { "sku": req.body.sku };
+                    let pcollection = customer_domain + "." + productsCollection;
+                    let pgcollection = customer_domain + "." + productGroupsCollection;
 
-                    dbClient.db(externalDB).collection(customer_domain + "." + productsCollection).find(query).toArray(function(err, result) {
+                    dbClient.db(externalDB).collection(pcollection).find(query).toArray(function(err, result) {
 
                         if (err) throw err;
 
@@ -666,20 +673,20 @@ var main = function () {
 
                         if(result.length == 0) {
 
-                            dbClient.db(externalDB).collection(customer_domain + "." + productsCollection).insertOne(product, function(err, result) {
+                            dbClient.db(externalDB).collection(pcollection).insertOne(product, function(err, result) {
 
                                 if (err) throw err;
 
-                                let Gquery = { "groupID": product["groupID"] };
+                                let gQuery = { "groupID": product["groupID"] };
 
-                                dbClient.db(externalDB).collection(customer_domain + "." + productGroupsCollection).find(Gquery).toArray(function (err, result) {
+                                dbClient.db(externalDB).collection(pgcollection).find(gQuery).toArray(function (err, result) {
 
                                     if (err) throw err;
 
                                         if (result.length != 1) {
-                                            createProductGroup(dbClient, customer_domain + "." + productGroupsCollection, product);
+                                            createProductGroup(dbClient, pgcollection, product);
                                         } else {
-                                            updateProductGroup(dbClient, customer_domain + "." + productGroupsCollection, product["groupID"], product);
+                                            updateProductGroup(dbClient, pgcollection, product["groupID"], product);
                                         } 
 
                                 });
@@ -695,21 +702,21 @@ var main = function () {
 
                             product["_id"] = result[0]["_id"];
 
-                            dbClient.db(externalDB).collection(customer_domain + "." + productsCollection).updateOne(query, product, function(err, result) {
+                            dbClient.db(externalDB).collection(pcollection).updateOne(query, product, function(err, result) {
                                 
                                 if (err) throw err;
                                 
                                 redisClient.del(req.url + req.body.sku);
                                 redisClient.set(req.url + req.body.sku, JSON.stringify(product));
 
-                                let Gquery = { "groupID": product["groupID"] };
+                                let gQuery = { "groupID": product["groupID"] };
 
-                                dbClient.db(externalDB).collection(customer_domain + "." + productGroupsCollection).find(Gquery).toArray(function (err, result) {
+                                dbClient.db(externalDB).collection(pgcollection).find(gQuery).toArray(function (err, result) {
 
                                     if (err) throw err;
 
                                         if (result.length == 1) {
-                                            updateProductGroup(dbClient, customer_domain + "." + productGroupsCollection, product["groupID"], product);
+                                            updateProductGroup(dbClient, pgcollection, product["groupID"], product);
                                         } 
 
                                 });
@@ -812,7 +819,7 @@ var main = function () {
 
                     let pgid = req.params.PGID;
                     res.setHeader('Content-Type', 'application/json');
-                    var query = { "groupID": pgid };
+                    var query = { "groupID" : pgid };
                     response = new Object();
 
                     let pcollection = customer_domain + "." + productsCollection;
@@ -837,7 +844,8 @@ var main = function () {
 
                         var pdelQuery = {'sku': { '$in' : pskus }};
 
-                        dbClient.db(externalDB).collection(pcollection).deleteOne(pdelQuery, function(err, result) {
+                        dbClient.db(externalDB).collection(pcollection).deleteMany(pdelQuery, function(err, result) {
+
 
                             if (err) throw err;
 
