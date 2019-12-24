@@ -25,6 +25,18 @@ const ProductGroup = new Schema({
     productSKUs: {
         type: Array
     },
+    colors: {
+
+    },
+    brands: {
+
+    },
+    sizes: {
+
+    },
+    searchKeywords: {
+        type: Array
+    },
     products: {
         type: Map
     }

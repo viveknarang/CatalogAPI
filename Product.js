@@ -31,11 +31,20 @@ const Product = new Schema({
     quantity: {
         type: Number
     },
-    active: {
-        type: Boolean
-    },
     category: {
         type: Array
+    },
+    color: {
+        type: String
+    },
+    brand: {
+        type: String
+    },
+    size: {
+        type: String
+    },
+    active: {
+        type: Boolean
     },
     attributes: {
         type: Map

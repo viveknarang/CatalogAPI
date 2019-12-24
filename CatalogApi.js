@@ -101,6 +101,9 @@ function createProductGroup(sdbClient, scollection, product) {
     subProduct.active = product["active"];
     subProduct.category = product["category"];
     subProduct.attributes = product["attributes"];
+    subProduct.color = product["color"];
+    subProduct.brand = product["brand"];
+    subProduct.size = product["size"];    
 
     productMap.set(product["sku"], subProduct);
 
@@ -113,6 +116,10 @@ function createProductGroup(sdbClient, scollection, product) {
                                 promotionPriceRange : [product["promotionPrice"], product["promotionPrice"]],
                                 active : product["active"],
                                 productSKUs : [Product["sku"]],
+                                colors : [product["color"]],
+                                brands : [product["brand"]],
+                                sizes : [product["size"]],
+                                searchKeywords : product["searchKeywords"],
                                 products : productMap,
 
                               });
@@ -154,6 +161,10 @@ function updateProductGroup(sdbClient, scollection, pgid, uProduct) {
             subProduct.active = uProduct["active"];
             subProduct.category = uProduct["category"];
             subProduct.attributes = uProduct["attributes"];
+            subProduct.color = uProduct["color"];
+            subProduct.brand = uProduct["brand"];
+            subProduct.size = uProduct["size"];   
+            subProduct.searchKeywords = uProduct["searchKeywords"];     
 
             pg["products"].set(uProduct["sku"], subProduct);
 
@@ -163,6 +174,10 @@ function updateProductGroup(sdbClient, scollection, pgid, uProduct) {
             let nppmax = 0;
             let nActive = false;
             let nProductSKUs = [];
+            let ncolors = [];
+            let nbrands = [];
+            let nsizes = [];
+            let nSearchKeywords = [];
 
             for (let product of pg["products"].values()) {
 
@@ -183,21 +198,40 @@ function updateProductGroup(sdbClient, scollection, pgid, uProduct) {
 
                 nActive = nActive || product["active"];
                 nProductSKUs.push(String(product["sku"]));
+                ncolors.push(String(product["color"]));
+                nbrands.push(String(product["brand"]));
+                nsizes.push(String(product["size"]));
+                nSearchKeywords.push(...product["searchKeywords"]);
 
             }
 
             pg["regularPriceRange"][0] = nrpmin;
-            pg["regularPriceRange"][1] = nrpmax;
-            
+            pg["regularPriceRange"][1] = nrpmax;            
             pg["promotionPriceRange"][0] = nppmin;
             pg["promotionPriceRange"][1] = nppmax;
-
             pg["active"] = nActive;
             pg["name"] = productName;
             pg["description"] = productDescription;
             pg["productSKUs"] = [...new Set(nProductSKUs)]; 
+            pg["colors"] = [...new Set(ncolors)]; 
+            pg["brands"] = [...new Set(nbrands)]; 
+            pg["sizes"] = [...new Set(nsizes)]; 
+            pg["searchKeywords"] = [...new Set(nSearchKeywords)]; 
  
-            sdbClient.db(externalDB).collection(scollection).updateOne(query, pg, function(err, result) {
+            let uQuery = { $set: {   
+                                        "products" : pg["products"], 
+                                        "productSKUs" : pg["productSKUs"] , 
+                                        "active" : pg["active"], 
+                                        "promotionPriceRange" : pg["promotionPriceRange"], 
+                                        "regularPriceRange" : pg["regularPriceRange"],
+                                        "colors" : pg["colors"],
+                                        "brands" : pg["brands"],
+                                        "sizes" : pg["sizes"],
+                                        "searchKeywords" : pg["searchKeywords"]
+                                    
+                                    } };
+ 
+            sdbClient.db(externalDB).collection(scollection).updateOne(query, uQuery, function(err, result) {
                                 
                 if (err) throw err;
 
@@ -250,6 +284,10 @@ function deleteProductInProductGroup(dbClient, pgcollection, pgid, sku, response
         let nppmax = 0;
         let nActive = false;
         let nProductSKUs = [];
+        let ncolors = [];
+        let nbrands = [];
+        let nsizes = [];
+        let nSearchKeywords = [];
 
         for (let product of pg["products"].values()) {
 
@@ -270,6 +308,10 @@ function deleteProductInProductGroup(dbClient, pgcollection, pgid, sku, response
 
             nActive = nActive || product["active"];
             nProductSKUs.push(String(product["sku"]));
+            ncolors.push(String(product["color"]));
+            nbrands.push(String(product["brand"]));
+            nsizes.push(String(product["size"]));
+            nSearchKeywords.push(...product["searchKeywords"]);
 
         }
 
@@ -279,12 +321,22 @@ function deleteProductInProductGroup(dbClient, pgcollection, pgid, sku, response
         pg["promotionPriceRange"][1] = nppmax;
         pg["active"] = nActive;
         pg["productSKUs"] = [...new Set(nProductSKUs)];
+        pg["colors"] = [...new Set(ncolors)]; 
+        pg["brands"] = [...new Set(nbrands)]; 
+        pg["sizes"] = [...new Set(nsizes)]; 
+        pg["searchKeywords"] = [...new Set(nSearchKeywords)]; 
 
         let setQuery = { $set: { "products" : products, 
                                  "productSKUs" : pg["productSKUs"] , 
                                  "active" : pg["active"], 
                                  "promotionPriceRange" : pg["promotionPriceRange"], 
-                                 "regularPriceRange" : pg["regularPriceRange"]} };
+                                 "regularPriceRange" : pg["regularPriceRange"],
+                                 "colors" : pg["colors"],
+                                 "brands" : pg["brands"],
+                                 "sizes" : pg["sizes"],
+                                 "searchKeywords" : pg["searchKeywords"]
+                                
+                                } };
 
             dbClient.db(externalDB).collection(pgcollection).updateOne(query, setQuery, function(err, result) {
                                         
