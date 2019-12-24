@@ -797,6 +797,7 @@ var main = function () {
                             if (err) throw err;
                             
                             redisClient.del(req.url);
+                            redisClient.del('/catalog/' + apiVersion + '/productgroups/' + pgid);
 
                             response[apiResponseKeySuccess] = true;
                             response[apiResponseKeyCode] = apiResponseCodeOk; 
@@ -867,6 +868,13 @@ var main = function () {
                                     if (err) throw err;
 
                                     redisClient.del(req.url);
+
+                                    function removeCacheKeysForSubProducts(sku, index) {
+                                        redisClient.del('/catalog/' + apiVersion + '/products/' + sku);
+                                    }
+
+                                    pskus.forEach(removeCacheKeysForSubProducts);
+
 
                                     response[apiResponseKeySuccess] = true;
                                     response[apiResponseKeyCode] = apiResponseCodeOk; 
