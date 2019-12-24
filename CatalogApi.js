@@ -30,6 +30,9 @@ let apiResponseCodeOk = properties.get('api.response.code.ok');
 let apiResponseCodeInvalid = properties.get('api.response.code.invalid');
 let apiResponseCodeError = properties.get('api.response.code.error');
 let apiVersion = properties.get('api.version');
+let apiResponseKeyMessage = properties.get('api.response.key.message');
+let apiResponseKeyCode = properties.get('api.response.key.code');
+let apiResponseKeySuccess = properties.get('api.response.key.success');
 
 var redisClient = redis.createClient(redisPort, redisHost);
 var app = express();
@@ -48,7 +51,8 @@ function authenticate(req, res, next) {
             next();
         } else {
             return res.json({
-                responseCode: apiResponseCodeInvalid,
+                apiResponseKeySuccess: false,
+                apiResponseKeyCode: apiResponseCodeInvalid,
                 message: "The token is not valid (anymore)! If you think that your token is expired please use the login endpoint to get a new token for your API calls ..."
               });
         }
@@ -209,8 +213,9 @@ function deleteProductInProductGroup(dbClient, pgcollection, pgid, sku, response
                                     
                 if (err) throw err;
 
-                response["responseCode"] = apiResponseCodeOk; 
-                response["responseMessage"] = "Since the product group had only one product left the entire product group is now deleted ...";
+                response[apiResponseKeySuccess] = true;
+                response[apiResponseKeyCode] = apiResponseCodeOk; 
+                response[apiResponseKeyMessage] = "Since the product group had only one product left the entire product group is now deleted ...";
                 res.json(response);
                 res.end();
 
@@ -327,13 +332,14 @@ var main = function () {
 
                 response["token"] = token; 
                 response["validFor"] = jwtTokenExpiry;
-                response["responseCode"] = apiResponseCodeOk; 
-                response["responseMessage"] = "Access with valid credentials ...";
+                response[apiResponseKeySuccess] = true;
+                response[apiResponseKeyCode] = apiResponseCodeOk; 
+                response[apiResponseKeyMessage] = "Access with valid credentials ...";
             
             } else {
-
-                response["responseCode"] = apiResponseCodeInvalid; 
-                response["responseMessage"] = "Invalid credentials ...";
+                response[apiResponseKeySuccess] = false;
+                response[apiResponseKeyCode] = apiResponseCodeInvalid; 
+                response[apiResponseKeyMessage] = "Invalid credentials ...";
 
             }
 
@@ -564,7 +570,8 @@ var main = function () {
 
                                 });
 
-                                response["responseCode"] = apiResponseCodeOk; 
+                                response[apiResponseKeySuccess] = true;
+                                response[apiResponseKeyCode] = apiResponseCodeOk; 
                                 response["response"] = product;
                                 res.json(response);
                                 res.end();
@@ -574,9 +581,10 @@ var main = function () {
 
 
                         }  else {
-        
-                            response["responseCode"] = apiResponseCodeInvalid; 
-                            response["responseMessage"] = "Product with the mentioned SKU already exists, if you want to update any field(s) please use the PUT method ...";
+
+                            response[apiResponseKeySuccess] = false;
+                            response[apiResponseKeyCode] = apiResponseCodeInvalid; 
+                            response[apiResponseKeyMessage] = "Product with the mentioned SKU already exists, if you want to update any field(s) please use the PUT method ...";
                             res.json(response);
                             res.end();
             
@@ -691,7 +699,8 @@ var main = function () {
 
                                 });
 
-                                response["responseCode"] = apiResponseCodeOk; 
+                                response[apiResponseKeySuccess] = true;
+                                response[apiResponseKeyCode] = apiResponseCodeOk; 
                                 response["response"] = product;
                                 res.json(response);
                                 res.end(); 
@@ -721,8 +730,9 @@ var main = function () {
 
                                 });
                                 
-                                response["responseCode"] = apiResponseCodeOk; 
-                                response["responseMessage"] = "Product Updated";
+                                response[apiResponseKeySuccess] = true;
+                                response[apiResponseKeyCode] = apiResponseCodeOk; 
+                                response[apiResponseKeyMessage] = "Product Updated";
                                 response["response"] = product;
                                 res.json(response);
                                 res.end();
@@ -771,8 +781,9 @@ var main = function () {
                          
                         if (result == null || result.length == 0) {
 
-                            response["responseCode"] = apiResponseCodeInvalid; 
-                            response["responseMessage"] = "Product with SKU " + sku + " does not exist ...";
+                            response[apiResponseKeySuccess] = false;
+                            response[apiResponseKeyCode] = apiResponseCodeInvalid; 
+                            response[apiResponseKeyMessage] = "Product with SKU " + sku + " does not exist ...";
                             res.json(response);
                             res.end();
                             return;
@@ -787,8 +798,9 @@ var main = function () {
                             
                             redisClient.del(req.url);
 
-                            response["responseCode"] = apiResponseCodeOk; 
-                            response["responseMessage"] = "Product with SKU " + sku + " deleted and the product group is updated ...";
+                            response[apiResponseKeySuccess] = true;
+                            response[apiResponseKeyCode] = apiResponseCodeOk; 
+                            response[apiResponseKeyMessage] = "Product with SKU " + sku + " deleted and the product group is updated ...";
 
                             deleteProductInProductGroup(dbClient, pgcollection, pgid, sku, response, res);
                             return;
@@ -832,8 +844,9 @@ var main = function () {
 
                         if (result == null || result.length == 0) {
 
-                            response["responseCode"] = apiResponseCodeInvalid; 
-                            response["responseMessage"] = "Product Group with ID " + pgid + " does not exist ...";
+                            response[apiResponseKeySuccess] = false;
+                            response[apiResponseKeyCode] = apiResponseCodeInvalid; 
+                            response[apiResponseKeyMessage] = "Product Group with ID " + pgid + " does not exist ...";
                             res.json(response);
                             res.end();
                             return;
@@ -855,8 +868,9 @@ var main = function () {
 
                                     redisClient.del(req.url);
 
-                                    response["responseCode"] = apiResponseCodeOk; 
-                                    response["responseMessage"] = "Product group is now deleted ...";
+                                    response[apiResponseKeySuccess] = true;
+                                    response[apiResponseKeyCode] = apiResponseCodeOk; 
+                                    response[apiResponseKeyMessage] = "Product group is now deleted ...";
 
                                     res.json(response);
                                     res.end();
