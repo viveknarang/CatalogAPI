@@ -10,7 +10,6 @@ const Product = require('./Product');
 const ProductGroup = require('./ProductGroup');
 var bodyParser = require('body-parser');
 var path = require("path");
-var redis = require('redis');
 
 var properties = PropertiesReader('CatalogAPI.properties');
 var apiPort = properties.get('api.port');
@@ -22,8 +21,6 @@ let productsCollection = properties.get('mongodb.collection.products');
 let productGroupsCollection = properties.get('mongodb.collection.productgroups');
 let internalDB = properties.get('mongodb.internal.db');
 let externalDB = properties.get('mongodb.external.db');
-let redisHost = properties.get('redis.host');
-let redisPort = properties.get('redis.port');
 let jwtKey = properties.get('jwt.privateKey');
 let jwtTokenExpiry = properties.get('jwt.token.expiry');
 let apiResponseCodeOk = properties.get('api.response.code.ok');
@@ -36,8 +33,8 @@ let apiResponseKeySuccess = properties.get('api.response.key.success');
 let apiResponseErrorMessage = properties.get('api.response.error.message');
 let apiResponseErrorStatus = properties.get('api.response.error.status');
 
-var redisClient = redis.createClient(redisPort, redisHost);
 var app = express();
+let redisClient = null;
 
 app.use(compression());
 app.use(bodyParser.json());
@@ -310,8 +307,9 @@ function apiResponseError(res) {
     res.end();
 }
 
-var main = function () {
+var main = function (rc) {
 
+    redisClient = rc;
     var dbClient = mongoUtil.getClient();    
 
     app.get('/', (req, res) => {
@@ -627,6 +625,7 @@ var main = function () {
                                 response[apiResponseKeySuccess] = true;
                                 response[apiResponseKeyCode] = apiResponseCodeOk; 
                                 response["response"] = product;
+                                redisClient.del('/catalog/' + apiVersion + '/productgroups/' + product["groupID"]);
                                 res.json(response);
                                 res.end();
                 
@@ -786,6 +785,7 @@ var main = function () {
                                                 
                                 redisClient.del(req.url + req.body.sku);
                                 redisClient.set(req.url + req.body.sku, JSON.stringify(product));
+                                redisClient.del('/catalog/' + apiVersion + '/productgroups/' + product["groupID"]);
 
                                 let gQuery = { "groupID": product["groupID"] };
 
