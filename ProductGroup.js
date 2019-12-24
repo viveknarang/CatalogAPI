@@ -25,9 +25,6 @@ const ProductGroup = new Schema({
     productSKUs: {
         type: Array
     },
-    searchKeywords: {
-        type: Array
-    },
     products: {
         type: Map
     }
