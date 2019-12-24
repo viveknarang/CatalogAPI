@@ -33,6 +33,8 @@ let apiVersion = properties.get('api.version');
 let apiResponseKeyMessage = properties.get('api.response.key.message');
 let apiResponseKeyCode = properties.get('api.response.key.code');
 let apiResponseKeySuccess = properties.get('api.response.key.success');
+let apiResponseErrorMessage = properties.get('api.response.error.message');
+let apiResponseErrorStatus = properties.get('api.response.error.status');
 
 var redisClient = redis.createClient(redisPort, redisHost);
 var app = express();
@@ -286,6 +288,11 @@ function deleteProductInProductGroup(dbClient, pgcollection, pgid, sku, response
 
 }
 
+function apiResponseError(res) {
+    res.status(apiResponseErrorStatus);
+    res.send(apiResponseErrorMessage);
+    res.end();
+}
 
 var main = function () {
 
@@ -318,7 +325,10 @@ var main = function () {
     
         dbClient.db(internalDB).collection(customerCollection).find(query).toArray(function (err, result) {
 
-            if (err) throw err;
+            if (err) {
+                apiResponseError(res);
+                throw err;
+            }
 
             res.setHeader('Content-Type', 'application/json');
             response = new Object();
@@ -368,10 +378,11 @@ var main = function () {
 
             res.setHeader('Content-Type', 'application/json');
 
-            redisClient.get(req.url, function (error, cache_result) {
+            redisClient.get(req.url, function (err, cache_result) {
 
-                if (error) {
-                    throw error;
+                if (err) {
+                    apiResponseError(res);
+                    throw err;
                 }
 
                 if (cache_result == null || cache_result.length == 0) {
@@ -383,7 +394,10 @@ var main = function () {
 
                             dbClient.db(externalDB).collection(pgcollection).find(query).toArray(function (err, result) {
            
-                                if (err) throw err;
+                                if (err) {
+                                    apiResponseError(res);
+                                    throw err;
+                                }
 
                                 if (result.length == 1) {
                                     redisClient.set(req.url, JSON.stringify(result[0]));
@@ -434,11 +448,11 @@ var main = function () {
 
             res.setHeader('Content-Type', 'application/json');
 
-            redisClient.get(req.url, function (error, cache_result) {
+            redisClient.get(req.url, function (err, cache_result) {
 
-                if (error) {
-                    console.log(error);
-                    throw error;
+                if (err) {
+                    apiResponseError(res);
+                    throw err;
                 }
 
                 if (cache_result == null || cache_result.length == 0) {
@@ -450,8 +464,11 @@ var main = function () {
 
                             dbClient.db(externalDB).collection(pcollection).find(query).toArray(function (err, result) {            
            
-                                if (err) throw err;
-               
+                                if (err) {
+                                    apiResponseError(res);
+                                    throw err;
+                                }
+                               
                                 if (result.length == 1) {
                                     redisClient.set(req.url, JSON.stringify(result[0]));
                                     res.json(result[0]);
@@ -557,8 +574,11 @@ var main = function () {
 
                 dbClient.db(externalDB).collection(pcollection).find(query).toArray(function(err, result) {
 
-                    if (err) throw err;
-
+                    if (err) {
+                        apiResponseError(res);
+                        throw err;
+                    }
+    
                         res.setHeader('Content-Type', 'application/json');
                         response = new Object();
 
@@ -566,14 +586,20 @@ var main = function () {
 
                             dbClient.db(externalDB).collection(pcollection).insertOne(product, function(err, result) {
 
-                                if (err) throw err;
-
+                                if (err) {
+                                    apiResponseError(res);
+                                    throw err;
+                                }
+                
                                 let Gquery = { "groupID": product["groupID"] };
 
                                 dbClient.db(externalDB).collection(pgcollection).find(Gquery).toArray(function (err, result) {
 
-                                    if (err) throw err;
-
+                                    if (err) {
+                                        apiResponseError(res);
+                                        throw err;
+                                    }
+                    
                                         if (result.length != 1) {
                                             createProductGroup(dbClient, pgcollection, product);
                                         } else {
@@ -678,7 +704,10 @@ var main = function () {
 
             redisClient.get(req.headers['x-access-token'], function(err, customer_domain) {
 
-                if (err) throw err;
+                if (err) {
+                    apiResponseError(res);
+                    throw err;
+                }
 
                     var query = { "sku": req.body.sku };
                     let pcollection = customer_domain + "." + productsCollection;
@@ -686,8 +715,11 @@ var main = function () {
 
                     dbClient.db(externalDB).collection(pcollection).find(query).toArray(function(err, result) {
 
-                        if (err) throw err;
-
+                        if (err) {
+                            apiResponseError(res);
+                            throw err;
+                        }
+        
                         res.setHeader('Content-Type', 'application/json');
                         response = new Object();
 
@@ -695,14 +727,20 @@ var main = function () {
 
                             dbClient.db(externalDB).collection(pcollection).insertOne(product, function(err, result) {
 
-                                if (err) throw err;
-
+                                if (err) {
+                                    apiResponseError(res);
+                                    throw err;
+                                }
+                
                                 let gQuery = { "groupID": product["groupID"] };
 
                                 dbClient.db(externalDB).collection(pgcollection).find(gQuery).toArray(function (err, result) {
 
-                                    if (err) throw err;
-
+                                    if (err) {
+                                        apiResponseError(res);
+                                        throw err;
+                                    }
+                    
                                         if (result.length != 1) {
                                             createProductGroup(dbClient, pgcollection, product);
                                         } else {
@@ -725,8 +763,11 @@ var main = function () {
 
                             dbClient.db(externalDB).collection(pcollection).updateOne(query, product, function(err, result) {
                                 
-                                if (err) throw err;
-                                
+                                if (err) {
+                                    apiResponseError(res);
+                                    throw err;
+                                }
+                                                
                                 redisClient.del(req.url + req.body.sku);
                                 redisClient.set(req.url + req.body.sku, JSON.stringify(product));
 
@@ -734,8 +775,11 @@ var main = function () {
 
                                 dbClient.db(externalDB).collection(pgcollection).find(gQuery).toArray(function (err, result) {
 
-                                    if (err) throw err;
-
+                                    if (err) {
+                                        apiResponseError(res);
+                                        throw err;
+                                    }
+                    
                                         if (result.length == 1) {
                                             updateProductGroup(dbClient, pgcollection, product["groupID"], product);
                                         } 
@@ -777,7 +821,11 @@ var main = function () {
 
             redisClient.get(req.headers['x-access-token'], function(err, customer_domain) {
 
-                if (err) throw err;
+                if (err) {
+                    apiResponseError(res);
+                    throw err;
+                }
+
                 let pcollection = customer_domain + "." + productsCollection;
                 let pgcollection = customer_domain + "." + productGroupsCollection;
 
@@ -789,8 +837,11 @@ var main = function () {
 
                     dbClient.db(externalDB).collection(pcollection).find(query).toArray(function (err, result) {      
                         
-                        if (err) throw err;
-                         
+                        if (err) {
+                            apiResponseError(res);
+                            throw err;
+                        }
+                                 
                         if (result == null || result.length == 0) {
 
                             response[apiResponseKeySuccess] = false;
@@ -806,8 +857,11 @@ var main = function () {
 
                         dbClient.db(externalDB).collection(pcollection).deleteOne(query, function(err, result) {
 
-                            if (err) throw err;
-                            
+                            if (err) {
+                                apiResponseError(res);
+                                throw err;
+                            }
+                                        
                             redisClient.del(req.url);
                             redisClient.del('/catalog/' + apiVersion + '/productgroups/' + pgid);
 
@@ -840,7 +894,10 @@ var main = function () {
 
             redisClient.get(req.headers['x-access-token'], function(err, customer_domain) {
 
-                if (err) throw err;
+                if (err) {
+                    apiResponseError(res);
+                    throw err;
+                }
 
                     let pgid = req.params.PGID;
                     res.setHeader('Content-Type', 'application/json');
@@ -853,8 +910,11 @@ var main = function () {
 
                     dbClient.db(externalDB).collection(pgcollection).find(query).toArray(function (err, result) {
 
-                        if (err) throw err;
-
+                        if (err) {
+                            apiResponseError(res);
+                            throw err;
+                        }
+        
                         if (result == null || result.length == 0) {
 
                             response[apiResponseKeySuccess] = false;
@@ -873,12 +933,18 @@ var main = function () {
                         dbClient.db(externalDB).collection(pcollection).deleteMany(pdelQuery, function(err, result) {
 
 
-                            if (err) throw err;
-
+                            if (err) {
+                                apiResponseError(res);
+                                throw err;
+                            }
+            
                                 dbClient.db(externalDB).collection(pgcollection).deleteOne(query, function(err, result) {
                                     
-                                    if (err) throw err;
-
+                                    if (err) {
+                                        apiResponseError(res);
+                                        throw err;
+                                    }
+                    
                                     redisClient.del(req.url);
 
                                     function removeCacheKeysForSubProducts(sku, index) {
