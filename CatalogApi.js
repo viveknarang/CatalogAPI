@@ -50,13 +50,29 @@ function authenticate(req, res, next) {
     jwt.verify(token, jwtKey, function (err, decoded) {
 
         if (!err) {
-            next();
+
+            redisClient.get(token, function(error, result) {
+
+                if(result == null) { 
+                    redisClient.set(token, decoded["secret"]);
+                    redisClient.expire(token, jwtTokenExpiry);
+                }
+
+                next();
+
+            });
+
+
         } else {
+
+            redisClient.del(token);
+
             return res.json({
                 apiResponseKeySuccess: false,
                 apiResponseKeyCode: apiResponseCodeInvalid,
                 message: "The token is not valid (anymore)! If you think that your token is expired please use the login endpoint to get a new token for your API calls ..."
               });
+
         }
     });
 
@@ -335,7 +351,7 @@ var main = function () {
 
             if(result.length == 1) {
 
-                var token = jwt.sign({ secret : result[0]["secret"] }, jwtKey, { expiresIn: jwtTokenExpiry });
+                var token = jwt.sign({ secret : result[0]["name"] + "." + result[0]["secret"] }, jwtKey, { expiresIn: jwtTokenExpiry });
 
                 redisClient.set(token, result[0]["name"] + "." + result[0]["secret"]);
                 redisClient.expire(token, jwtTokenExpiry);
