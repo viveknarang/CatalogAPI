@@ -35,6 +35,7 @@ let apiResponseErrorStatus = properties.get('api.response.error.status');
 
 var app = express();
 let redisClient = null;
+let solrClient = null;
 
 app.use(compression());
 app.use(bodyParser.json());
@@ -85,7 +86,29 @@ function validateInput(req, res, next) {
     res.status(422).json({ errors: result.array() });
 }
 
-function createProductGroup(sdbClient, scollection, product) {
+function indexDocumentinSolr(solrClient, document) {
+
+    pg = new ProductGroup(document);
+
+    solrClient.add(pg.toObject(),function(err,obj){
+
+        if(err){
+            console.log(err);
+        }else{
+            solrClient.commit(function(err,obj){
+
+                if(err){
+                    console.log(err);
+                }
+
+            });
+        }
+
+     });
+
+}
+
+function createProductGroup(sdbClient, scollection, product, solrClient) {
 
 
     let productMap = new Map();
@@ -115,11 +138,12 @@ function createProductGroup(sdbClient, scollection, product) {
                                 regularPriceRange : [product["regularPrice"], product["regularPrice"]],
                                 promotionPriceRange : [product["promotionPrice"], product["promotionPrice"]],
                                 active : product["active"],
-                                productSKUs : [Product["sku"]],
+                                productSKUs : [product["sku"]],
                                 colors : [product["color"]],
                                 brands : [product["brand"]],
                                 sizes : [product["size"]],
                                 searchKeywords : product["searchKeywords"],
+                                category : product["category"],
                                 products : productMap,
 
                               });
@@ -127,6 +151,8 @@ function createProductGroup(sdbClient, scollection, product) {
     sdbClient.db(externalDB).collection(scollection).insertOne(pg, function(err, result) {
 
         if (err) throw err;
+
+        indexDocumentinSolr(solrClient, pg);
 
     });
 
@@ -178,6 +204,7 @@ function updateProductGroup(sdbClient, scollection, pgid, uProduct) {
             let nbrands = [];
             let nsizes = [];
             let nSearchKeywords = [];
+            let ncategory = [];
 
             for (let product of pg["products"].values()) {
 
@@ -202,6 +229,7 @@ function updateProductGroup(sdbClient, scollection, pgid, uProduct) {
                 nbrands.push(String(product["brand"]));
                 nsizes.push(String(product["size"]));
                 nSearchKeywords.push(...product["searchKeywords"]);
+                ncategory.push(...product["category"]);
 
             }
 
@@ -217,6 +245,8 @@ function updateProductGroup(sdbClient, scollection, pgid, uProduct) {
             pg["brands"] = [...new Set(nbrands)]; 
             pg["sizes"] = [...new Set(nsizes)]; 
             pg["searchKeywords"] = [...new Set(nSearchKeywords)]; 
+            pg["category"] = [...new Set(ncategory)]; 
+
  
             let uQuery = { $set: {   
                                         "products" : pg["products"], 
@@ -227,8 +257,8 @@ function updateProductGroup(sdbClient, scollection, pgid, uProduct) {
                                         "colors" : pg["colors"],
                                         "brands" : pg["brands"],
                                         "sizes" : pg["sizes"],
-                                        "searchKeywords" : pg["searchKeywords"]
-                                    
+                                        "searchKeywords" : pg["searchKeywords"],
+                                        "category" : pg["category"]                                    
                                     } };
  
             sdbClient.db(externalDB).collection(scollection).updateOne(query, uQuery, function(err, result) {
@@ -288,6 +318,7 @@ function deleteProductInProductGroup(dbClient, pgcollection, pgid, sku, response
         let nbrands = [];
         let nsizes = [];
         let nSearchKeywords = [];
+        let ncategory = [];
 
         for (let product of pg["products"].values()) {
 
@@ -312,6 +343,7 @@ function deleteProductInProductGroup(dbClient, pgcollection, pgid, sku, response
             nbrands.push(String(product["brand"]));
             nsizes.push(String(product["size"]));
             nSearchKeywords.push(...product["searchKeywords"]);
+            ncategory.push(...product["category"]);
 
         }
 
@@ -325,6 +357,7 @@ function deleteProductInProductGroup(dbClient, pgcollection, pgid, sku, response
         pg["brands"] = [...new Set(nbrands)]; 
         pg["sizes"] = [...new Set(nsizes)]; 
         pg["searchKeywords"] = [...new Set(nSearchKeywords)]; 
+        pg["category"] = [...new Set(ncategory)]; 
 
         let setQuery = { $set: { "products" : products, 
                                  "productSKUs" : pg["productSKUs"] , 
@@ -334,7 +367,8 @@ function deleteProductInProductGroup(dbClient, pgcollection, pgid, sku, response
                                  "colors" : pg["colors"],
                                  "brands" : pg["brands"],
                                  "sizes" : pg["sizes"],
-                                 "searchKeywords" : pg["searchKeywords"]
+                                 "searchKeywords" : pg["searchKeywords"],
+                                 "category" : pg["category"]
                                 
                                 } };
 
@@ -359,9 +393,11 @@ function apiResponseError(res) {
     res.end();
 }
 
-var main = function (rc) {
+var main = function (rc, sc) {
 
     redisClient = rc;
+    solrClient = sc;
+
     var dbClient = mongoUtil.getClient();    
 
     app.get('/', (req, res) => {
@@ -667,7 +703,7 @@ var main = function (rc) {
                                     }
                     
                                         if (result.length != 1) {
-                                            createProductGroup(dbClient, pgcollection, product);
+                                            createProductGroup(dbClient, pgcollection, product, solrClient);
                                         } else {
                                             updateProductGroup(dbClient, pgcollection, product["groupID"], product);
                                         }
@@ -971,6 +1007,7 @@ var main = function (rc) {
                     res.setHeader('Content-Type', 'application/json');
                     var query = { "groupID" : pgid };
                     response = new Object();
+                    let pg = new ProductGroup();
 
                     let pcollection = customer_domain + "." + productsCollection;
                     let pgcollection = customer_domain + "." + productGroupsCollection;
@@ -992,6 +1029,8 @@ var main = function (rc) {
                             res.end();
                             return;
 
+                        } else {
+                            pg = new ProductGroup(result[0]);
                         }
 
                         let pskus = result[0]["productSKUs"];
@@ -1021,13 +1060,29 @@ var main = function (rc) {
 
                                     pskus.forEach(removeCacheKeysForSubProducts);
 
+                                    
+                                    solrClient.delete("groupID", pgid, function(err,obj){
 
-                                    response[apiResponseKeySuccess] = true;
-                                    response[apiResponseKeyCode] = apiResponseCodeOk; 
-                                    response[apiResponseKeyMessage] = "Product group is now deleted ...";
-
-                                    res.json(response);
-                                    res.end();
+                                        if(err){
+                                            console.log(err);
+                                        }else{
+                                            solrClient.commit(function(err,obj){
+                                
+                                                if(err){
+                                                    console.log(err);
+                                                } else {
+                                                    response[apiResponseKeySuccess] = true;
+                                                    response[apiResponseKeyCode] = apiResponseCodeOk; 
+                                                    response[apiResponseKeyMessage] = "Product group is now deleted ...";
+                
+                                                    res.json(response);
+                                                    res.end();
+                                                }
+                                
+                                            });
+                                        }
+                                
+                                     });
 
                                 });
 

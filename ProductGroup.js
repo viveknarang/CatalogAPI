@@ -37,6 +37,9 @@ const ProductGroup = new Schema({
     searchKeywords: {
         type: Array
     },
+    category: {
+        type: Array
+    },
     products: {
         type: Map
     }
