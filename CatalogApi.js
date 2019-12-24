@@ -388,6 +388,12 @@ var main = function () {
                                 if (result.length == 1) {
                                     redisClient.set(req.url, JSON.stringify(result[0]));
                                     res.json(result[0]);
+                                } else {
+                                    response = new Object();
+                                    response[apiResponseKeySuccess] = false;
+                                    response[apiResponseKeyCode] = apiResponseCodeInvalid; 
+                                    response[apiResponseKeyMessage] = "Product Group with ID " + id + " not found ...";                                    
+                                    res.json(response);
                                 }
 
                                 res.end();
@@ -449,6 +455,12 @@ var main = function () {
                                 if (result.length == 1) {
                                     redisClient.set(req.url, JSON.stringify(result[0]));
                                     res.json(result[0]);
+                                } else {
+                                    response = new Object();
+                                    response[apiResponseKeySuccess] = false;
+                                    response[apiResponseKeyCode] = apiResponseCodeInvalid; 
+                                    response[apiResponseKeyMessage] = "Product with SKU " + sku + " not found ...";                                    
+                                    res.json(response);
                                 }
 
                                 res.end();
