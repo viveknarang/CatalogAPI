@@ -1189,7 +1189,7 @@ var main = function (rc, sc) {
     });    
 
 
-    app.get('/search', (req, res) => {
+    app.get('/search', authenticate, (req, res) => {
 
         var query = solrClient.createQuery().q({ '*' : '*'});
 
@@ -1205,8 +1205,8 @@ var main = function (rc, sc) {
     
     });
 
-
-    app.get('/search/delete/all', (req, res) => {
+    // TEMP METHOD WILL BE REMOVED SOON ...
+    app.get('/search/delete/all', authenticate, (req, res) => {
 
         var query = solrClient.createQuery().q({ '*' : '*'});
 
