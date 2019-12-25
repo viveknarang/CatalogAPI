@@ -26,13 +26,13 @@ const ProductGroup = new Schema({
         type: Array
     },
     colors: {
-
+        type: Array
     },
     brands: {
-
+        type: Array
     },
     sizes: {
-
+        type: Array
     },
     searchKeywords: {
         type: Array

@@ -19,8 +19,8 @@ var solrClient = solr.createClient({host : solrURL, port : solrPort, core : solr
 solrClient.ping(function(err,obj){
   if(err){
      
-     console.log("Is Solr down? Please check and try again ...");
-     return;
+      console.log(err);
+      return;
 
   }else{
 

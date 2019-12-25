@@ -159,7 +159,7 @@ function createProductGroup(sdbClient, scollection, product, solrClient) {
 }
 
 
-function updateProductGroup(sdbClient, scollection, pgid, uProduct) {
+function updateProductGroup(sdbClient, scollection, pgid, uProduct, solrClient) {
 
     var query = { "groupID" : pgid };
     
@@ -264,6 +264,51 @@ function updateProductGroup(sdbClient, scollection, pgid, uProduct) {
             sdbClient.db(externalDB).collection(scollection).updateOne(query, uQuery, function(err, result) {
                                 
                 if (err) throw err;
+
+                var query = solrClient.createQuery().q({ 'groupID' : pgid });
+
+                solrClient.search(query, function(err,obj){
+
+                    if(err){
+
+                        console.log(err);
+                    
+                    }else{
+
+                        let data = {   
+                            "id" : obj.response.docs[0]["id"],
+                            "productSKUs" : { "set" : pg["productSKUs"] } , 
+                            "active" : { "set" : pg["active"] }, 
+                            "promotionPriceRange" : { "set" : pg["promotionPriceRange"] }, 
+                            "regularPriceRange" : { "set" : pg["regularPriceRange"] },
+                            "colors" : { "set" : pg["colors"] },
+                            "brands" : { "set" : pg["brands"] },
+                            "sizes" : { "set" : pg["sizes"] },
+                            "searchKeywords" : { "set" : pg["searchKeywords"] },
+                            "category" : { "set" : pg["category"] }                                   
+                        };
+
+                        solrClient.atomicUpdate(data,function(err,obj){
+
+                            if(err){
+                                console.log(err);
+                            }else{
+                                solrClient.commit(function(err,obj){
+                    
+                                    if(err){
+                                        console.log(err);
+                                    }
+                    
+                                });
+                            }
+                    
+                         });
+
+                    }
+            
+                 });
+
+                
 
             });
 
@@ -375,9 +420,55 @@ function deleteProductInProductGroup(dbClient, pgcollection, pgid, sku, response
             dbClient.db(externalDB).collection(pgcollection).updateOne(query, setQuery, function(err, result) {
                                         
                 if (err) throw err;
-                res.json(response);
-                res.end();
-                return;
+
+
+
+                var query = solrClient.createQuery().q({ 'groupID' : pgid });
+
+                solrClient.search(query, function(err,obj){
+
+                    if(err){
+
+                        console.log(err);
+                    
+                    }else{
+
+                        let data = {   
+                            "id" : obj.response.docs[0]["id"],
+                            "productSKUs" : { "set" : pg["productSKUs"] } , 
+                            "active" : { "set" : pg["active"] }, 
+                            "promotionPriceRange" : { "set" : pg["promotionPriceRange"] }, 
+                            "regularPriceRange" : { "set" : pg["regularPriceRange"] },
+                            "colors" : { "set" : pg["colors"] },
+                            "brands" : { "set" : pg["brands"] },
+                            "sizes" : { "set" : pg["sizes"] },
+                            "searchKeywords" : { "set" : pg["searchKeywords"] },
+                            "category" : { "set" : pg["category"] }                                   
+                        };
+
+                        solrClient.atomicUpdate(data,function(err,obj){
+
+                            if(err){
+                                console.log(err);
+                            }else{
+                                solrClient.commit(function(err,obj){
+                    
+                                    if(err){
+                                        console.log(err);
+                                    }
+
+                                    res.json(response);
+                                    res.end();
+                                    return;
+                    
+                                });
+                            }
+                    
+                         });
+
+                    }   
+                    
+                });
 
             });
 
@@ -705,7 +796,7 @@ var main = function (rc, sc) {
                                         if (result.length != 1) {
                                             createProductGroup(dbClient, pgcollection, product, solrClient);
                                         } else {
-                                            updateProductGroup(dbClient, pgcollection, product["groupID"], product);
+                                            updateProductGroup(dbClient, pgcollection, product["groupID"], product, solrClient);
                                         }
 
                                 });
@@ -845,9 +936,9 @@ var main = function (rc, sc) {
                                     }
                     
                                         if (result.length != 1) {
-                                            createProductGroup(dbClient, pgcollection, product);
+                                            createProductGroup(dbClient, pgcollection, product, solrClient);
                                         } else {
-                                            updateProductGroup(dbClient, pgcollection, product["groupID"], product);
+                                            updateProductGroup(dbClient, pgcollection, product["groupID"], product, solrClient);
                                         } 
 
                                 });
@@ -885,7 +976,7 @@ var main = function (rc, sc) {
                                     }
                     
                                         if (result.length == 1) {
-                                            updateProductGroup(dbClient, pgcollection, product["groupID"], product);
+                                            updateProductGroup(dbClient, pgcollection, product["groupID"], product, solrClient);
                                         } 
 
                                 });
@@ -1096,8 +1187,55 @@ var main = function (rc, sc) {
             });
         
     });    
-    
 
+
+    app.get('/search', (req, res) => {
+
+        var query = solrClient.createQuery().q({ '*' : '*'});
+
+        solrClient.search(query, function(err,obj){
+
+            if(err){
+                console.log(err);
+            }else{
+                res.json(obj.response.docs);
+            }
+    
+         });
+    
+    });
+
+
+    app.get('/search/delete/all', (req, res) => {
+
+        var query = solrClient.createQuery().q({ '*' : '*'});
+
+        solrClient.deleteAll(query, function(err,obj){
+
+            if(err){
+                console.log(err);
+            }else{
+                solrClient.commit(function(err,obj){
+
+                    if(err){
+                        console.log(err);
+                    }
+
+                    response = new Object();
+                    response[apiResponseKeySuccess] = true;
+                    response[apiResponseKeyCode] = apiResponseCodeOk; 
+                    response[apiResponseKeyMessage] = "Product group is now deleted ...";
+
+                    res.json(response);
+                    res.end();
+    
+                });
+            }
+    
+         });
+    
+    });
+    
     app.listen(apiPort, () => { console.log(`Listening port ${apiPort} ...`); });
 
 };
