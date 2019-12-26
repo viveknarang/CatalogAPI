@@ -249,8 +249,10 @@ function updateProductGroup(sdbClient, scollection, pgid, uProduct, solrClient) 
 
  
             let uQuery = { $set: {   
-                                        "products" : pg["products"], 
-                                        "productSKUs" : pg["productSKUs"] , 
+                                        "products" : pg["products"],
+                                        "name" : pg["name"], 
+                                        "description" : pg["description"],
+                                        "productSKUs" : pg["productSKUs"], 
                                         "active" : pg["active"], 
                                         "promotionPriceRange" : pg["promotionPriceRange"], 
                                         "regularPriceRange" : pg["regularPriceRange"],
@@ -278,6 +280,8 @@ function updateProductGroup(sdbClient, scollection, pgid, uProduct, solrClient) 
                         let data = {   
                             "id" : obj.response.docs[0]["id"],
                             "productSKUs" : { "set" : pg["productSKUs"] } , 
+                            "name" : { "set" : pg["name"] }, 
+                            "description" : { "set" : pg["description"] },
                             "active" : { "set" : pg["active"] }, 
                             "promotionPriceRange" : { "set" : pg["promotionPriceRange"] }, 
                             "regularPriceRange" : { "set" : pg["regularPriceRange"] },
@@ -1194,6 +1198,25 @@ var main = function (rc, sc) {
         var query = solrClient.createQuery().q({ '*' : '*'});
 
         solrClient.search(query, function(err,obj){
+
+            if(err){
+                console.log(err);
+            }else{
+                res.json(obj.response.docs);
+            }
+    
+         });
+    
+    });
+
+    app.get('/search/:QUERY', authenticate, (req, res) => {
+
+
+        let query = req.params.QUERY;
+
+        var squery = solrClient.createQuery().q('*' + query + '*').qf({ name : 1 , searchKeywords : 1, productSKUs : 1 }).edismax();
+
+        solrClient.search(squery, function(err,obj){
 
             if(err){
                 console.log(err);
