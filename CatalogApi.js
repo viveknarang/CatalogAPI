@@ -154,6 +154,7 @@ function createProductGroup(sdbClient, scollection, product, esClient, res, resp
     subProduct.color = product["color"];
     subProduct.brand = product["brand"];
     subProduct.size = product["size"];    
+    subProduct.isMain = product["isMain"];
 
     productMap.set(product["sku"], subProduct);
 
@@ -173,6 +174,7 @@ function createProductGroup(sdbClient, scollection, product, esClient, res, resp
                                 sizes : [product["size"]],
                                 searchKeywords : product["searchKeywords"],
                                 category : product["category"],
+                                images : product["images"],
                                 products : productMap,
 
                               });
@@ -226,7 +228,8 @@ function updateProductGroup(sdbClient, scollection, pgid, uProduct, esClient, re
             subProduct.color = uProduct["color"];
             subProduct.brand = uProduct["brand"];
             subProduct.size = uProduct["size"];   
-            subProduct.searchKeywords = uProduct["searchKeywords"];     
+            subProduct.searchKeywords = uProduct["searchKeywords"];   
+            subProduct.isMain = uProduct["isMain"];  
 
             pg["products"].set(uProduct["sku"], subProduct);
 
@@ -259,6 +262,14 @@ function updateProductGroup(sdbClient, scollection, pgid, uProduct, esClient, re
                     nppmin = product["promotionPrice"];
                 }
 
+                if (uProduct["isMain"] == true) {
+                    if (product["sku"] == uProduct["sku"]) {
+                        product["sku"] = true;
+                    } else {
+                        product["sku"] = false;
+                    }
+                }
+
                 nActive = nActive || product["active"];
                 nProductSKUs.push(String(product["sku"]));
                 ncolors.push(String(product["color"]));
@@ -268,6 +279,7 @@ function updateProductGroup(sdbClient, scollection, pgid, uProduct, esClient, re
                 ncategory.push(...product["category"]);
 
             }
+
 
             pg["regularPriceMin"] = nrpmin;            
             pg["regularPriceMax"] = nrpmax;            
@@ -283,8 +295,35 @@ function updateProductGroup(sdbClient, scollection, pgid, uProduct, esClient, re
             pg["searchKeywords"] = [...new Set(nSearchKeywords)]; 
             pg["category"] = [...new Set(ncategory)]; 
 
- 
-            let uQuery = { $set: {   
+            let uQuery = null;
+
+            if (uProduct["isMain"] == true) {
+            
+                        pg["images"] = uProduct["images"];
+
+                        uQuery = { $set: {   
+                            
+                            "products" : pg["products"],
+                            "name" : pg["name"], 
+                            "description" : pg["description"],
+                            "productSKUs" : pg["productSKUs"], 
+                            "active" : pg["active"], 
+                            "regularPriceMin" : pg["regularPriceMin"],
+                            "regularPriceMax" : pg["regularPriceMax"],
+                            "promotionPriceMin" : pg["promotionPriceMin"],
+                            "promotionPriceMax" : pg["promotionPriceMax"],
+                            "colors" : pg["colors"],
+                            "brands" : pg["brands"],
+                            "sizes" : pg["sizes"],
+                            "searchKeywords" : pg["searchKeywords"],
+                            "category" : pg["category"],
+                            "images" : pg["images"]     
+
+                        } };
+            
+            } else  {
+
+                        uQuery = { $set: {   
                                         "products" : pg["products"],
                                         "name" : pg["name"], 
                                         "description" : pg["description"],
@@ -300,6 +339,8 @@ function updateProductGroup(sdbClient, scollection, pgid, uProduct, esClient, re
                                         "searchKeywords" : pg["searchKeywords"],
                                         "category" : pg["category"]                                    
                                     } };
+
+            }
  
             sdbClient.db(externalDB).collection(scollection).updateOne(query, uQuery, function(err, result) {
                                 
@@ -332,7 +373,9 @@ function deleteProductInProductGroup(esClient, dbClient, pgcollection, pgid, sku
         }
 
         let products = result[0]["products"];
+        let isDeletedProductMain = result[0]["products"][sku]["isMain"];
         delete products[sku];
+        let postDeletedProductsLength = products.length;
 
         if (Object.keys(products).length == 0) {
 
@@ -345,7 +388,7 @@ function deleteProductInProductGroup(esClient, dbClient, pgcollection, pgid, sku
 
                 response[apiResponseKeySuccess] = true;
                 response[apiResponseKeyCode] = apiResponseCodeOk; 
-                response[apiResponseKeyMessage] = "Since the product group had only one product left the entire product group is now deleted ...";
+                response[apiResponseKeyMessage] = "Since the product group had only one product (remaining), the entire product group is now deleted ...";
                 res.json(response);
                 res.end();
 
@@ -370,8 +413,12 @@ function deleteProductInProductGroup(esClient, dbClient, pgcollection, pgid, sku
         let nsizes = [];
         let nSearchKeywords = [];
         let ncategory = [];
-
+        let updated = false;
+        
+        let i = 0;
         for (let product of pg["products"].values()) {
+
+            i++;
 
             if (product["regularPrice"] > nrpmax) {
                 nrpmax = product["regularPrice"];
@@ -387,6 +434,16 @@ function deleteProductInProductGroup(esClient, dbClient, pgcollection, pgid, sku
             if (product["promotionPrice"] < nppmin) {
                 nppmin = product["promotionPrice"];
             }
+
+            if (isDeletedProductMain) {
+                    if (product["isMain"] == true) {
+                        pg["images"] = product["images"];
+                        updated = true;
+                    } else if (!updated && postDeletedProductsLength == i) {
+                        pg["images"] = product["images"];
+                        updated = true;
+                    }
+                }
 
             nActive = nActive || product["active"];
             nProductSKUs.push(String(product["sku"]));
@@ -672,15 +729,20 @@ var main = function (rc, esc) {
         [
             check('sku').exists().withMessage("SKU should be present ..."),
             check('sku').isLength({ min: 3 }).withMessage("SKU Value needs to be more than 3 characters ..."),
+            check('sku').isLength({ max: 50 }).withMessage("SKU Value cannot be more than 50 characters ..."),
+
 
             check('name').exists().withMessage("Product Name should be present ..."),
             check('name').isLength({ min: 3 }).withMessage("Product Name Value needs to be more than 3 characters ..."),
+            check('name').isLength({ max: 250 }).withMessage("Product Name Value cannot be more than 250 characters ..."),
 
             check('groupID').exists().withMessage("Product Group ID should be present ..."),
             check('groupID').isLength({ min: 3 }).withMessage("Product Group ID Value needs to be more than 3 characters ..."),
+            check('groupID').isLength({ max: 50 }).withMessage("Product Group ID Value cannot be more than 50 characters ..."),
 
             check('description').exists().withMessage("Product Desription should be present ..."),
             check('description').isLength({ min: 3 }).withMessage("Product Desription Value needs to be more than 3 characters ..."),
+            check('description').isLength({ max: 2048 }).withMessage("Product Desription Value cannot be more than 2048 characters ..."),
 
             check('regularPrice').exists().withMessage("Regular Price should be present ..."),
             check('regularPrice').isDecimal().withMessage("Regular Price should be numeric ..."),
@@ -719,8 +781,16 @@ var main = function (rc, esc) {
                     return true
                 }
 
-            })            
-
+            }),
+            
+            check('images').exists().withMessage("Valid image URLs are mandatory for good user experience ..."),
+            check('images').isURL().withMessage("Valid image URLs are mandatory for good user experience ..."),
+            check('searchKeywords').exists().withMessage("searchKeywords field should be populated with relevant keywords for good quality search ..."),
+            check('category').exists().withMessage("Category mapping is essential for good recommendation ..."),
+            check('active').exists().withMessage("active flag is a mandatory field ..."),
+            check('active').isBoolean().withMessage("active flag should only have either true or false as a value ..."),
+            check('isMain').exists().withMessage("isMain flag is a mandatory field ..."),
+            check('isMain').isBoolean().withMessage("isMain flag should only have either true or false as a value ...")
         ],
 
         authenticate,
@@ -808,15 +878,20 @@ var main = function (rc, esc) {
         [
             check('sku').exists().withMessage("SKU should be present ..."),
             check('sku').isLength({ min: 3 }).withMessage("SKU Value needs to be more than 3 characters ..."),
+            check('sku').isLength({ max: 50 }).withMessage("SKU Value cannot be more than 50 characters ..."),
+
 
             check('name').exists().withMessage("Product Name should be present ..."),
             check('name').isLength({ min: 3 }).withMessage("Product Name Value needs to be more than 3 characters ..."),
+            check('name').isLength({ max: 250 }).withMessage("Product Name Value cannot be more than 250 characters ..."),
 
             check('groupID').exists().withMessage("Product Group ID should be present ..."),
             check('groupID').isLength({ min: 3 }).withMessage("Product Group ID Value needs to be more than 3 characters ..."),
+            check('groupID').isLength({ max: 50 }).withMessage("Product Group ID Value cannot be more than 50 characters ..."),
 
             check('description').exists().withMessage("Product Desription should be present ..."),
             check('description').isLength({ min: 3 }).withMessage("Product Desription Value needs to be more than 3 characters ..."),
+            check('description').isLength({ max: 2048 }).withMessage("Product Desription Value cannot be more than 2048 characters ..."),
 
             check('regularPrice').exists().withMessage("Regular Price should be present ..."),
             check('regularPrice').isDecimal().withMessage("Regular Price should be numeric ..."),
@@ -855,9 +930,17 @@ var main = function (rc, esc) {
                     return true
                 }
 
-            })            
-
+            }),
             
+            check('images').exists().withMessage("Valid image URLs are mandatory for good user experience ..."),
+            check('images').isURL().withMessage("Valid image URLs are mandatory for good user experience ..."),
+            check('searchKeywords').exists().withMessage("searchKeywords field should be populated with relevant keywords for good quality search ..."),
+            check('category').exists().withMessage("Category mapping is essential for good recommendation ..."),
+            check('active').exists().withMessage("active flag is a mandatory field ..."),
+            check('active').isBoolean().withMessage("active flag should only have either true or false as a value ..."),
+            check('isMain').exists().withMessage("isMain flag is a mandatory field ..."),
+            check('isMain').isBoolean().withMessage("isMain flag should only have either true or false as a value ...")
+
         ],
 
         authenticate,

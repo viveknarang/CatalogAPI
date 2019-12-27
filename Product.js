@@ -23,7 +23,7 @@ const Product = new Schema({
         type: Number
     },
     images: {
-        type: Map
+        type: Array
     },
     searchKeywords: {
         type: Array
@@ -48,6 +48,10 @@ const Product = new Schema({
     },
     attributes: {
         type: Map
+    },
+    isMain: {
+        type: Boolean,
+        default: 'true'
     },
 
     _id: false

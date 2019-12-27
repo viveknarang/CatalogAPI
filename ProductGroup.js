@@ -40,6 +40,9 @@ const ProductGroup = new Schema({
     sizes: {
         type: Array
     },
+    images:{ 
+        type: Array
+    },
     searchKeywords: {
         type: Array
     },
