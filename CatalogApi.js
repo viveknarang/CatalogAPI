@@ -79,6 +79,7 @@ function authenticate(req, res, next) {
 function validateInput(req, res, next) {
 
     const result = validationResult(req);
+
     if (result.isEmpty()) {
         return next();
     }
@@ -100,8 +101,11 @@ function indexDocumentinES(esClient, index, document, res, response) {
 
       }, {}, (err, result) => {
 
-        if (err) console.log(err);
-
+        if (err) {
+            apiResponseError(res);
+            throw err;
+        }
+        
         res.json(response);
         res.end();
 
@@ -119,8 +123,11 @@ function deleteDocumentinES(esClient, index, pgid, res, response) {
         
       }, {}, (err, result) => {
 
-        if (err) console.log(err);
-
+        if (err) {
+            apiResponseError(res);
+            throw err;
+        }
+        
         res.json(response);
         res.end();
 
@@ -173,8 +180,11 @@ function createProductGroup(sdbClient, scollection, product, esClient, res, resp
 
     sdbClient.db(externalDB).collection(scollection).insertOne(pg, function(err, result) {
 
-        if (err) throw err;
-
+        if (err) {
+            apiResponseError(res);
+            throw err;
+        }
+        
         indexDocumentinES(esClient, scollection, pg, res, response);
 
     });
@@ -188,8 +198,11 @@ function updateProductGroup(sdbClient, scollection, pgid, uProduct, esClient, re
     
     sdbClient.db(externalDB).collection(scollection).find(query).toArray(function (err, result) {
 
-        if (err) throw err;
-
+        if (err) {
+            apiResponseError(res);
+            throw err;
+        }
+        
         if (result != null && result.length == 1) {
 
             let pg = new ProductGroup(result[0]);
@@ -290,7 +303,10 @@ function updateProductGroup(sdbClient, scollection, pgid, uProduct, esClient, re
  
             sdbClient.db(externalDB).collection(scollection).updateOne(query, uQuery, function(err, result) {
                                 
-                if (err) throw err;
+                if (err) {
+                    apiResponseError(res);
+                    throw err;
+                }
 
                 indexDocumentinES(esClient, scollection, pg, res, response);                
 
@@ -310,7 +326,10 @@ function deleteProductInProductGroup(esClient, dbClient, pgcollection, pgid, sku
         
     dbClient.db(externalDB).collection(pgcollection).find(query).toArray(function (err, result) {
 
-        if (err) throw err;
+        if (err) {
+            apiResponseError(res);
+            throw err;
+        }
 
         let products = result[0]["products"];
         delete products[sku];
@@ -319,7 +338,10 @@ function deleteProductInProductGroup(esClient, dbClient, pgcollection, pgid, sku
 
             dbClient.db(externalDB).collection(pgcollection).deleteOne(query, function(err, result) {
                                     
-                if (err) throw err;
+                if (err) {
+                    apiResponseError(res);
+                    throw err;
+                }
 
                 response[apiResponseKeySuccess] = true;
                 response[apiResponseKeyCode] = apiResponseCodeOk; 
@@ -405,7 +427,10 @@ function deleteProductInProductGroup(esClient, dbClient, pgcollection, pgid, sku
 
             dbClient.db(externalDB).collection(pgcollection).updateOne(query, setQuery, function(err, result) {
                                         
-                if (err) throw err;
+                if (err) {
+                    apiResponseError(res);
+                    throw err;
+                }
 
                 indexDocumentinES(esClient, pgcollection, pg, res, response);                
                    
@@ -419,9 +444,16 @@ function deleteProductInProductGroup(esClient, dbClient, pgcollection, pgid, sku
 }
 
 function apiResponseError(res) {
+
+    response = new Object();
+    response[apiResponseKeySuccess] = false;
+    response[apiResponseKeyMessage] = apiResponseErrorMessage;
+    response[apiResponseKeyCode] = apiResponseCodeError; 
+
     res.status(apiResponseErrorStatus);
-    res.send(apiResponseErrorMessage);
+    res.send(response);
     res.end();
+
 }
 
 var main = function (rc, esc) {
