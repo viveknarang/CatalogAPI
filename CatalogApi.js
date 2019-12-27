@@ -32,6 +32,7 @@ let apiResponseKeyCode = properties.get('api.response.key.code');
 let apiResponseKeySuccess = properties.get('api.response.key.success');
 let apiResponseErrorMessage = properties.get('api.response.error.message');
 let apiResponseErrorStatus = properties.get('api.response.error.status');
+let appName = properties.get('app.name');
 
 var app = express();
 let redisClient = null;
@@ -1239,7 +1240,7 @@ var main = function (rc, esc) {
 
         });
 
-    app.listen(apiPort, () => { console.log(`CatalogAPI is now listening at the port ${apiPort} ...`); });
+    app.listen(apiPort, () => { console.log(appName + ` is now listening port ${apiPort} ...`); });
 
 };
 

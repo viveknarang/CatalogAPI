@@ -32,4 +32,8 @@ module.exports = {
         return _client;
     },
 
+    baseURL,
+
+    port
+
 };
