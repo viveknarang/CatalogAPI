@@ -264,9 +264,9 @@ function updateProductGroup(sdbClient, scollection, pgid, uProduct, esClient, re
 
                 if (uProduct["isMain"] == true) {
                     if (product["sku"] == uProduct["sku"]) {
-                        product["sku"] = true;
+                        product["isMain"] = true;
                     } else {
-                        product["sku"] = false;
+                        product["isMain"] = false;
                     }
                 }
 
@@ -389,8 +389,9 @@ function deleteProductInProductGroup(esClient, dbClient, pgcollection, pgid, sku
                 response[apiResponseKeySuccess] = true;
                 response[apiResponseKeyCode] = apiResponseCodeOk; 
                 response[apiResponseKeyMessage] = "Since the product group had only one product (remaining), the entire product group is now deleted ...";
-                res.json(response);
-                res.end();
+
+                deleteDocumentinES(esClient, pgcollection, pgid, res, response);
+
 
             });
 
