@@ -14,27 +14,40 @@ const { Client } = require('@elastic/elasticsearch')
 const esClient = new Client({ node: 'http://' + esURL + ":" + esPort })
 
 
-    console.log("Connecting to Elastic Search ...");
-    esClient.ping({},{}, (err, result) => {
+console.log("Testing Elastic Search connectivity ...");
+esClient.ping({}, {}, (err, result) => {
 
-          if (err) {
-            console.log(err)
-            return;
-          }
-          console.log("Elastic Search is responsing ...");
-          console.log("Connecting to MongoDB ...");
-          mongoUtil.connectToServer(function (err, client) {
+  if (err) {
+    console.log(err)
+    return;
+  }
 
-            if (err) console.log(err);
-            console.log("MongoDB is responsing ...");
-            console.log("Finally, connecting to redis ...");
-            let redisClient = redis.createClient(redisPort, redisHost);
-            
-            catalog.main(redisClient, esClient);
-          
-          });
-  
+  console.log("Elastic Search is responding ...");
+  console.log("Testing MongoDB connectivity ...");
+  mongoUtil.connectToServer(function (err, client) {
+
+    if (err) console.log(err);
+    console.log("MongoDB is responsing ...");
+    console.log("Testing Redis connectivity ...");
+    let redisClient = redis.createClient(redisPort, redisHost);
+
+    redisClient.set("TEST_KEY", "TEST_VALUE");
+    redisClient.get("TEST_KEY", function (err, test_result) {
+
+      if (err) {
+        console.log(err);
+        return;
+      } else if (test_result == "TEST_VALUE") {
+        console.log("Redis is working normally ...");
+        redisClient.del("TEST_KEY");
+        catalog.main(redisClient, esClient);
+      }
+
     });
+
+  });
+
+});
 
 
 

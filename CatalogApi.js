@@ -43,15 +43,15 @@ app.use(bodyParser.urlencoded({ extended: false }));
 
 function authenticate(req, res, next) {
 
-    let token = req.headers['x-access-token']; 
+    let token = req.headers['x-access-token'];
 
     jwt.verify(token, jwtKey, function (err, decoded) {
 
         if (!err) {
 
-            redisClient.get(token, function(error, result) {
+            redisClient.get(token, function (error, result) {
 
-                if(result == null) { 
+                if (result == null) {
                     redisClient.set(token, decoded["secret"]);
                     redisClient.expire(token, jwtTokenExpiry);
                 }
@@ -69,7 +69,7 @@ function authenticate(req, res, next) {
                 apiResponseKeySuccess: false,
                 apiResponseKeyCode: apiResponseCodeInvalid,
                 message: "The token is not valid (anymore)! If you think that your token is expired please use the login endpoint to get a new token for your API calls ..."
-              });
+            });
 
         }
     });
@@ -92,46 +92,46 @@ function indexDocumentinES(esClient, index, document, res, response) {
     pg = new ProductGroup(document);
 
     esClient.index({
-        
+
         index: (index + '.index').toLowerCase(),
 
         id: pg["groupID"],
-        
+
         body: pg
 
-      }, {}, (err, result) => {
+    }, {}, (err, result) => {
 
         if (err) {
             apiResponseError(res);
             throw err;
         }
-        
+
         res.json(response);
         res.end();
 
-      });
+    });
 
 }
 
 function deleteDocumentinES(esClient, index, pgid, res, response) {
 
     esClient.delete({
-        
+
         index: (index + '.index').toLowerCase(),
 
         id: pgid,
-        
-      }, {}, (err, result) => {
+
+    }, {}, (err, result) => {
 
         if (err) {
             apiResponseError(res);
             throw err;
         }
-        
+
         res.json(response);
         res.end();
 
-      });
+    });
 
 }
 
@@ -153,40 +153,40 @@ function createProductGroup(sdbClient, scollection, product, esClient, res, resp
     subProduct.attributes = product["attributes"];
     subProduct.color = product["color"];
     subProduct.brand = product["brand"];
-    subProduct.size = product["size"];    
+    subProduct.size = product["size"];
     subProduct.isMain = product["isMain"];
 
     productMap.set(product["sku"], subProduct);
 
-    let pg = new ProductGroup({ 
+    let pg = new ProductGroup({
 
-                                groupID : product["groupID"], 
-                                name : product["name"],
-                                description : product["description"],
-                                regularPriceMin : product["regularPrice"],
-                                regularPriceMax : product["regularPrice"],
-                                promotionPriceMin : product["promotionPrice"],
-                                promotionPriceMax : product["promotionPrice"],
-                                active : product["active"],
-                                productSKUs : [product["sku"]],
-                                colors : [product["color"]],
-                                brands : [product["brand"]],
-                                sizes : [product["size"]],
-                                searchKeywords : product["searchKeywords"],
-                                category : product["category"],
-                                images : product["images"],
-                                products : productMap,
+        groupID: product["groupID"],
+        name: product["name"],
+        description: product["description"],
+        regularPriceMin: product["regularPrice"],
+        regularPriceMax: product["regularPrice"],
+        promotionPriceMin: product["promotionPrice"],
+        promotionPriceMax: product["promotionPrice"],
+        active: product["active"],
+        productSKUs: [product["sku"]],
+        colors: [product["color"]],
+        brands: [product["brand"]],
+        sizes: [product["size"]],
+        searchKeywords: product["searchKeywords"],
+        category: product["category"],
+        images: product["images"],
+        products: productMap,
 
-                              });
+    });
 
 
-    sdbClient.db(externalDB).collection(scollection).insertOne(pg, function(err, result) {
+    sdbClient.db(externalDB).collection(scollection).insertOne(pg, function (err, result) {
 
         if (err) {
             apiResponseError(res);
             throw err;
         }
-        
+
         indexDocumentinES(esClient, scollection, pg, res, response);
 
     });
@@ -196,15 +196,15 @@ function createProductGroup(sdbClient, scollection, product, esClient, res, resp
 
 function updateProductGroup(sdbClient, scollection, pgid, uProduct, esClient, res, response) {
 
-    var query = { "groupID" : pgid };
-    
+    var query = { "groupID": pgid };
+
     sdbClient.db(externalDB).collection(scollection).find(query).toArray(function (err, result) {
 
         if (err) {
             apiResponseError(res);
             throw err;
         }
-        
+
         if (result != null && result.length == 1) {
 
             let pg = new ProductGroup(result[0]);
@@ -227,9 +227,9 @@ function updateProductGroup(sdbClient, scollection, pgid, uProduct, esClient, re
             subProduct.attributes = uProduct["attributes"];
             subProduct.color = uProduct["color"];
             subProduct.brand = uProduct["brand"];
-            subProduct.size = uProduct["size"];   
-            subProduct.searchKeywords = uProduct["searchKeywords"];   
-            subProduct.isMain = uProduct["isMain"];  
+            subProduct.size = uProduct["size"];
+            subProduct.searchKeywords = uProduct["searchKeywords"];
+            subProduct.isMain = uProduct["isMain"];
 
             pg["products"].set(uProduct["sku"], subProduct);
 
@@ -281,75 +281,79 @@ function updateProductGroup(sdbClient, scollection, pgid, uProduct, esClient, re
             }
 
 
-            pg["regularPriceMin"] = nrpmin;            
-            pg["regularPriceMax"] = nrpmax;            
+            pg["regularPriceMin"] = nrpmin;
+            pg["regularPriceMax"] = nrpmax;
             pg["promotionPriceMin"] = nppmin;
             pg["promotionPriceMax"] = nppmax;
             pg["active"] = nActive;
             pg["name"] = productName;
             pg["description"] = productDescription;
-            pg["productSKUs"] = [...new Set(nProductSKUs)]; 
-            pg["colors"] = [...new Set(ncolors)]; 
-            pg["brands"] = [...new Set(nbrands)]; 
-            pg["sizes"] = [...new Set(nsizes)]; 
-            pg["searchKeywords"] = [...new Set(nSearchKeywords)]; 
-            pg["category"] = [...new Set(ncategory)]; 
+            pg["productSKUs"] = [...new Set(nProductSKUs)];
+            pg["colors"] = [...new Set(ncolors)];
+            pg["brands"] = [...new Set(nbrands)];
+            pg["sizes"] = [...new Set(nsizes)];
+            pg["searchKeywords"] = [...new Set(nSearchKeywords)];
+            pg["category"] = [...new Set(ncategory)];
 
             let uQuery = null;
 
             if (uProduct["isMain"] == true) {
-            
-                        pg["images"] = uProduct["images"];
 
-                        uQuery = { $set: {   
-                            
-                            "products" : pg["products"],
-                            "name" : pg["name"], 
-                            "description" : pg["description"],
-                            "productSKUs" : pg["productSKUs"], 
-                            "active" : pg["active"], 
-                            "regularPriceMin" : pg["regularPriceMin"],
-                            "regularPriceMax" : pg["regularPriceMax"],
-                            "promotionPriceMin" : pg["promotionPriceMin"],
-                            "promotionPriceMax" : pg["promotionPriceMax"],
-                            "colors" : pg["colors"],
-                            "brands" : pg["brands"],
-                            "sizes" : pg["sizes"],
-                            "searchKeywords" : pg["searchKeywords"],
-                            "category" : pg["category"],
-                            "images" : pg["images"]     
+                pg["images"] = uProduct["images"];
 
-                        } };
-            
-            } else  {
+                uQuery = {
+                    $set: {
 
-                        uQuery = { $set: {   
-                                        "products" : pg["products"],
-                                        "name" : pg["name"], 
-                                        "description" : pg["description"],
-                                        "productSKUs" : pg["productSKUs"], 
-                                        "active" : pg["active"], 
-                                        "regularPriceMin" : pg["regularPriceMin"],
-                                        "regularPriceMax" : pg["regularPriceMax"],
-                                        "promotionPriceMin" : pg["promotionPriceMin"],
-                                        "promotionPriceMax" : pg["promotionPriceMax"],
-                                        "colors" : pg["colors"],
-                                        "brands" : pg["brands"],
-                                        "sizes" : pg["sizes"],
-                                        "searchKeywords" : pg["searchKeywords"],
-                                        "category" : pg["category"]                                    
-                                    } };
+                        "products": pg["products"],
+                        "name": pg["name"],
+                        "description": pg["description"],
+                        "productSKUs": pg["productSKUs"],
+                        "active": pg["active"],
+                        "regularPriceMin": pg["regularPriceMin"],
+                        "regularPriceMax": pg["regularPriceMax"],
+                        "promotionPriceMin": pg["promotionPriceMin"],
+                        "promotionPriceMax": pg["promotionPriceMax"],
+                        "colors": pg["colors"],
+                        "brands": pg["brands"],
+                        "sizes": pg["sizes"],
+                        "searchKeywords": pg["searchKeywords"],
+                        "category": pg["category"],
+                        "images": pg["images"]
+
+                    }
+                };
+
+            } else {
+
+                uQuery = {
+                    $set: {
+                        "products": pg["products"],
+                        "name": pg["name"],
+                        "description": pg["description"],
+                        "productSKUs": pg["productSKUs"],
+                        "active": pg["active"],
+                        "regularPriceMin": pg["regularPriceMin"],
+                        "regularPriceMax": pg["regularPriceMax"],
+                        "promotionPriceMin": pg["promotionPriceMin"],
+                        "promotionPriceMax": pg["promotionPriceMax"],
+                        "colors": pg["colors"],
+                        "brands": pg["brands"],
+                        "sizes": pg["sizes"],
+                        "searchKeywords": pg["searchKeywords"],
+                        "category": pg["category"]
+                    }
+                };
 
             }
- 
-            sdbClient.db(externalDB).collection(scollection).updateOne(query, uQuery, function(err, result) {
-                                
+
+            sdbClient.db(externalDB).collection(scollection).updateOne(query, uQuery, function (err, result) {
+
                 if (err) {
                     apiResponseError(res);
                     throw err;
                 }
 
-                indexDocumentinES(esClient, scollection, pg, res, response);                
+                indexDocumentinES(esClient, scollection, pg, res, response);
 
             });
 
@@ -363,8 +367,8 @@ function updateProductGroup(sdbClient, scollection, pgid, uProduct, esClient, re
 
 function deleteProductInProductGroup(esClient, dbClient, pgcollection, pgid, sku, res, response) {
 
-    var query = { "groupID" : pgid };
-        
+    var query = { "groupID": pgid };
+
     dbClient.db(externalDB).collection(pgcollection).find(query).toArray(function (err, result) {
 
         if (err) {
@@ -379,15 +383,15 @@ function deleteProductInProductGroup(esClient, dbClient, pgcollection, pgid, sku
 
         if (Object.keys(products).length == 0) {
 
-            dbClient.db(externalDB).collection(pgcollection).deleteOne(query, function(err, result) {
-                                    
+            dbClient.db(externalDB).collection(pgcollection).deleteOne(query, function (err, result) {
+
                 if (err) {
                     apiResponseError(res);
                     throw err;
                 }
 
                 response[apiResponseKeySuccess] = true;
-                response[apiResponseKeyCode] = apiResponseCodeOk; 
+                response[apiResponseKeyCode] = apiResponseCodeOk;
                 response[apiResponseKeyMessage] = "Since the product group had only one product (remaining), the entire product group is now deleted ...";
 
                 deleteDocumentinES(esClient, pgcollection, pgid, res, response);
@@ -415,7 +419,7 @@ function deleteProductInProductGroup(esClient, dbClient, pgcollection, pgid, sku
         let nSearchKeywords = [];
         let ncategory = [];
         let updated = false;
-        
+
         let i = 0;
         for (let product of pg["products"].values()) {
 
@@ -437,14 +441,14 @@ function deleteProductInProductGroup(esClient, dbClient, pgcollection, pgid, sku
             }
 
             if (isDeletedProductMain) {
-                    if (product["isMain"] == true) {
-                        pg["images"] = product["images"];
-                        updated = true;
-                    } else if (!updated && postDeletedProductsLength == i) {
-                        pg["images"] = product["images"];
-                        updated = true;
-                    }
+                if (product["isMain"] == true) {
+                    pg["images"] = product["images"];
+                    updated = true;
+                } else if (!updated && postDeletedProductsLength == i) {
+                    pg["images"] = product["images"];
+                    updated = true;
                 }
+            }
 
             nActive = nActive || product["active"];
             nProductSKUs.push(String(product["sku"]));
@@ -456,44 +460,47 @@ function deleteProductInProductGroup(esClient, dbClient, pgcollection, pgid, sku
 
         }
 
-        pg["regularPriceMin"] = nrpmin;            
-        pg["regularPriceMax"] = nrpmax;            
+        pg["regularPriceMin"] = nrpmin;
+        pg["regularPriceMax"] = nrpmax;
         pg["promotionPriceMin"] = nppmin;
         pg["promotionPriceMax"] = nppmax;
         pg["active"] = nActive;
         pg["productSKUs"] = [...new Set(nProductSKUs)];
-        pg["colors"] = [...new Set(ncolors)]; 
-        pg["brands"] = [...new Set(nbrands)]; 
-        pg["sizes"] = [...new Set(nsizes)]; 
-        pg["searchKeywords"] = [...new Set(nSearchKeywords)]; 
-        pg["category"] = [...new Set(ncategory)]; 
+        pg["colors"] = [...new Set(ncolors)];
+        pg["brands"] = [...new Set(nbrands)];
+        pg["sizes"] = [...new Set(nsizes)];
+        pg["searchKeywords"] = [...new Set(nSearchKeywords)];
+        pg["category"] = [...new Set(ncategory)];
 
-        let setQuery = { $set: { "products" : products, 
-                                 "productSKUs" : pg["productSKUs"] , 
-                                 "active" : pg["active"], 
-                                 "regularPriceMin" : pg["regularPriceMin"],
-                                 "regularPriceMax" : pg["regularPriceMax"],
-                                 "promotionPriceMin" : pg["promotionPriceMin"],
-                                 "promotionPriceMax" : pg["promotionPriceMax"],
-                                 "colors" : pg["colors"],
-                                 "brands" : pg["brands"],
-                                 "sizes" : pg["sizes"],
-                                 "searchKeywords" : pg["searchKeywords"],
-                                 "category" : pg["category"]
-                                
-                                } };
+        let setQuery = {
+            $set: {
+                "products": products,
+                "productSKUs": pg["productSKUs"],
+                "active": pg["active"],
+                "regularPriceMin": pg["regularPriceMin"],
+                "regularPriceMax": pg["regularPriceMax"],
+                "promotionPriceMin": pg["promotionPriceMin"],
+                "promotionPriceMax": pg["promotionPriceMax"],
+                "colors": pg["colors"],
+                "brands": pg["brands"],
+                "sizes": pg["sizes"],
+                "searchKeywords": pg["searchKeywords"],
+                "category": pg["category"]
 
-            dbClient.db(externalDB).collection(pgcollection).updateOne(query, setQuery, function(err, result) {
-                                        
-                if (err) {
-                    apiResponseError(res);
-                    throw err;
-                }
+            }
+        };
 
-                indexDocumentinES(esClient, pgcollection, pg, res, response);                
-                   
+        dbClient.db(externalDB).collection(pgcollection).updateOne(query, setQuery, function (err, result) {
 
-            });
+            if (err) {
+                apiResponseError(res);
+                throw err;
+            }
+
+            indexDocumentinES(esClient, pgcollection, pg, res, response);
+
+
+        });
 
 
     });
@@ -506,7 +513,7 @@ function apiResponseError(res) {
     response = new Object();
     response[apiResponseKeySuccess] = false;
     response[apiResponseKeyMessage] = apiResponseErrorMessage;
-    response[apiResponseKeyCode] = apiResponseCodeError; 
+    response[apiResponseKeyCode] = apiResponseCodeError;
 
     res.status(apiResponseErrorStatus);
     res.send(response);
@@ -519,33 +526,33 @@ var main = function (rc, esc) {
     redisClient = rc;
     esClient = esc;
 
-    var dbClient = mongoUtil.getClient();    
+    var dbClient = mongoUtil.getClient();
 
     app.get('/', (req, res) => {
 
         res.sendFile(path.join(__dirname + '/docs/' + homepage));
-    
+
     });
-    
+
     app.get('/catalog', (req, res) => {
-    
+
         res.sendFile(path.join(__dirname + '/docs/' + catalogHomepage));
-    
+
     });
-    
+
     app.get('/admin', (req, res) => {
-    
+
         res.sendFile(path.join(__dirname + '/docs/' + adminHomepage));
-    
+
     });
-    
-    app.get('/admin/'+ apiVersion +'/customers/login/', function (req, res) {
-    
+
+    app.get('/admin/' + apiVersion + '/customers/login/', function (req, res) {
+
         let id = req.query.id;
-        let apiKey = req.query.apiKey;   
-        
-        var query = { "id" : id, "apiKey" : apiKey };
-    
+        let apiKey = req.query.apiKey;
+
+        var query = { "id": id, "apiKey": apiKey };
+
         dbClient.db(internalDB).collection(customerCollection).find(query).toArray(function (err, result) {
 
             if (err) {
@@ -556,22 +563,22 @@ var main = function (rc, esc) {
             res.setHeader('Content-Type', 'application/json');
             response = new Object();
 
-            if(result.length == 1) {
+            if (result.length == 1) {
 
-                var token = jwt.sign({ secret : result[0]["name"] + "." + result[0]["secret"] }, jwtKey, { expiresIn: jwtTokenExpiry });
+                var token = jwt.sign({ secret: result[0]["name"] + "." + result[0]["secret"] }, jwtKey, { expiresIn: jwtTokenExpiry });
 
                 redisClient.set(token, result[0]["name"] + "." + result[0]["secret"]);
                 redisClient.expire(token, jwtTokenExpiry);
 
-                response["token"] = token; 
+                response["token"] = token;
                 response["validFor"] = jwtTokenExpiry;
                 response[apiResponseKeySuccess] = true;
-                response[apiResponseKeyCode] = apiResponseCodeOk; 
+                response[apiResponseKeyCode] = apiResponseCodeOk;
                 response[apiResponseKeyMessage] = "Access with valid credentials ...";
-            
+
             } else {
                 response[apiResponseKeySuccess] = false;
-                response[apiResponseKeyCode] = apiResponseCodeInvalid; 
+                response[apiResponseKeyCode] = apiResponseCodeInvalid;
                 response[apiResponseKeyMessage] = "Invalid credentials ...";
 
             }
@@ -581,11 +588,11 @@ var main = function (rc, esc) {
 
         });
 
-    
+
     });
 
 
-    app.get('/catalog/'+ apiVersion +'/productgroups/:ID',
+    app.get('/catalog/' + apiVersion + '/productgroups/:ID',
 
         [
             check('ID').exists().withMessage("ID should be present ..."),
@@ -610,41 +617,41 @@ var main = function (rc, esc) {
 
                 if (cache_result == null || cache_result.length == 0) {
 
-                        redisClient.get(req.headers['x-access-token'], function(error, customer_domain) {
+                    redisClient.get(req.headers['x-access-token'], function (error, customer_domain) {
 
-                            var query = { $or : [ {productSKUs : { $elemMatch : { $eq : id } } } , { groupID : id } ]};
-                            let pgcollection = customer_domain + "." + productGroupsCollection;
+                        var query = { $or: [{ productSKUs: { $elemMatch: { $eq: id } } }, { groupID: id }] };
+                        let pgcollection = customer_domain + "." + productGroupsCollection;
 
-                            dbClient.db(externalDB).collection(pgcollection).find(query).toArray(function (err, result) {
-           
-                                if (err) {
-                                    apiResponseError(res);
-                                    throw err;
-                                }
+                        dbClient.db(externalDB).collection(pgcollection).find(query).toArray(function (err, result) {
 
-                                if (result.length == 1) {
-                                    redisClient.set(req.url, JSON.stringify(result[0]));
-                                    res.json(result[0]);
-                                } else {
-                                    response = new Object();
-                                    response[apiResponseKeySuccess] = false;
-                                    response[apiResponseKeyCode] = apiResponseCodeInvalid; 
-                                    response[apiResponseKeyMessage] = "Product Group with ID " + id + " not found ...";                                    
-                                    res.json(response);
-                                }
+                            if (err) {
+                                apiResponseError(res);
+                                throw err;
+                            }
 
-                                res.end();
-                
-                            });
+                            if (result.length == 1) {
+                                redisClient.set(req.url, JSON.stringify(result[0]));
+                                res.json(result[0]);
+                            } else {
+                                response = new Object();
+                                response[apiResponseKeySuccess] = false;
+                                response[apiResponseKeyCode] = apiResponseCodeInvalid;
+                                response[apiResponseKeyMessage] = "Product Group with ID " + id + " not found ...";
+                                res.json(response);
+                            }
+
+                            res.end();
+
+                        });
 
 
-                        }); 
-           
+                    });
+
 
                 } else {
 
-                            res.json(JSON.parse(cache_result));
-                            res.end();
+                    res.json(JSON.parse(cache_result));
+                    res.end();
 
                 }
 
@@ -652,10 +659,10 @@ var main = function (rc, esc) {
             });
 
 
-    });
+        });
 
 
-    app.get('/catalog/'+ apiVersion +'/products/:SKU',
+    app.get('/catalog/' + apiVersion + '/products/:SKU',
 
         [
             check('SKU').exists().withMessage("SKU should be present ..."),
@@ -680,41 +687,41 @@ var main = function (rc, esc) {
 
                 if (cache_result == null || cache_result.length == 0) {
 
-                        redisClient.get(req.headers['x-access-token'], function(error, customer_domain) {
+                    redisClient.get(req.headers['x-access-token'], function (error, customer_domain) {
 
-                            var query = { "sku": sku };
-                            let pcollection = customer_domain + "." + productsCollection;
+                        var query = { "sku": sku };
+                        let pcollection = customer_domain + "." + productsCollection;
 
-                            dbClient.db(externalDB).collection(pcollection).find(query).toArray(function (err, result) {            
-           
-                                if (err) {
-                                    apiResponseError(res);
-                                    throw err;
-                                }
-                               
-                                if (result.length == 1) {
-                                    redisClient.set(req.url, JSON.stringify(result[0]));
-                                    res.json(result[0]);
-                                } else {
-                                    response = new Object();
-                                    response[apiResponseKeySuccess] = false;
-                                    response[apiResponseKeyCode] = apiResponseCodeInvalid; 
-                                    response[apiResponseKeyMessage] = "Product with SKU " + sku + " not found ...";                                    
-                                    res.json(response);
-                                }
+                        dbClient.db(externalDB).collection(pcollection).find(query).toArray(function (err, result) {
 
-                                res.end();
-                
-                            });
+                            if (err) {
+                                apiResponseError(res);
+                                throw err;
+                            }
+
+                            if (result.length == 1) {
+                                redisClient.set(req.url, JSON.stringify(result[0]));
+                                res.json(result[0]);
+                            } else {
+                                response = new Object();
+                                response[apiResponseKeySuccess] = false;
+                                response[apiResponseKeyCode] = apiResponseCodeInvalid;
+                                response[apiResponseKeyMessage] = "Product with SKU " + sku + " not found ...";
+                                res.json(response);
+                            }
+
+                            res.end();
+
+                        });
 
 
-                        }); 
-           
+                    });
+
 
                 } else {
 
-                            res.json(JSON.parse(cache_result));
-                            res.end();
+                    res.json(JSON.parse(cache_result));
+                    res.end();
 
                 }
 
@@ -722,10 +729,10 @@ var main = function (rc, esc) {
             });
 
 
-    });
+        });
 
 
-    app.post('/catalog/'+ apiVersion +'/products',
+    app.post('/catalog/' + apiVersion + '/products',
 
         [
             check('sku').exists().withMessage("SKU should be present ..."),
@@ -748,11 +755,11 @@ var main = function (rc, esc) {
 
             check('regularPrice').exists().withMessage("Regular Price should be present ..."),
             check('regularPrice').isDecimal().withMessage("Regular Price should be numeric ..."),
-            
+
             check('regularPrice').custom(regularPrice => {
 
                 if (regularPrice < 0) {
-                  throw new Error('Regular Price cannot be less than 0 ...')
+                    throw new Error('Regular Price cannot be less than 0 ...')
                 } else {
                     return true
                 }
@@ -760,12 +767,12 @@ var main = function (rc, esc) {
             }),
 
             check('promotionPrice').exists().withMessage("Promotion Price should be present ..."),
-            check('promotionPrice').isDecimal().withMessage("Promotion Price should be numeric ..."),   
-            
+            check('promotionPrice').isDecimal().withMessage("Promotion Price should be numeric ..."),
+
             check('promotionPrice').custom(promotionPrice => {
 
                 if (promotionPrice < 0) {
-                  throw new Error('Promotion Price cannot be less than 0 ...')
+                    throw new Error('Promotion Price cannot be less than 0 ...')
                 } else {
                     return true
                 }
@@ -774,17 +781,17 @@ var main = function (rc, esc) {
 
             check('quantity').exists().withMessage("Quantity should be present ..."),
             check('quantity').isInt().withMessage("Quantity should be integer ..."),
-            
+
             check('quantity').custom(quantity => {
 
                 if (quantity < 0) {
-                  throw new Error('Quantity cannot be less than 0 ...')
+                    throw new Error('Quantity cannot be less than 0 ...')
                 } else {
                     return true
                 }
 
             }),
-            
+
             check('images').exists().withMessage("Valid image URLs are mandatory for good user experience ..."),
             check('images').isURL().withMessage("Valid image URLs are mandatory for good user experience ..."),
             check('searchKeywords').exists().withMessage("searchKeywords field should be populated with relevant keywords for good quality search ..."),
@@ -803,79 +810,79 @@ var main = function (rc, esc) {
 
             const product = new Product(req.body);
 
-            redisClient.get(req.headers['x-access-token'], function(error, customer_domain) {
+            redisClient.get(req.headers['x-access-token'], function (error, customer_domain) {
 
                 var query = { "sku": req.body.sku };
                 let pcollection = customer_domain + "." + productsCollection;
                 let pgcollection = customer_domain + "." + productGroupsCollection;
 
-                dbClient.db(externalDB).collection(pcollection).find(query).toArray(function(err, result) {
+                dbClient.db(externalDB).collection(pcollection).find(query).toArray(function (err, result) {
 
                     if (err) {
                         apiResponseError(res);
                         throw err;
                     }
-    
-                        res.setHeader('Content-Type', 'application/json');
-                        response = new Object();
 
-                        if(result.length == 0) {
+                    res.setHeader('Content-Type', 'application/json');
+                    response = new Object();
 
-                            dbClient.db(externalDB).collection(pcollection).insertOne(product, function(err, result) {
+                    if (result.length == 0) {
+
+                        dbClient.db(externalDB).collection(pcollection).insertOne(product, function (err, result) {
+
+                            if (err) {
+                                apiResponseError(res);
+                                throw err;
+                            }
+
+                            let Gquery = { "groupID": product["groupID"] };
+
+                            dbClient.db(externalDB).collection(pgcollection).find(Gquery).toArray(function (err, result) {
 
                                 if (err) {
                                     apiResponseError(res);
                                     throw err;
                                 }
-                
-                                let Gquery = { "groupID": product["groupID"] };
 
-                                dbClient.db(externalDB).collection(pgcollection).find(Gquery).toArray(function (err, result) {
 
-                                    if (err) {
-                                        apiResponseError(res);
-                                        throw err;
-                                    }
+                                response[apiResponseKeySuccess] = true;
+                                response[apiResponseKeyCode] = apiResponseCodeOk;
+                                response["response"] = product;
+                                redisClient.del('/catalog/' + apiVersion + '/productgroups/' + product["groupID"]);
 
-                                    
-                                    response[apiResponseKeySuccess] = true;
-                                    response[apiResponseKeyCode] = apiResponseCodeOk; 
-                                    response["response"] = product;
-                                    redisClient.del('/catalog/' + apiVersion + '/productgroups/' + product["groupID"]);
-    
 
-                                        if (result.length != 1) {
-                                            createProductGroup(dbClient, pgcollection, product, esClient, res ,response);
-                                        } else {
-                                            updateProductGroup(dbClient, pgcollection, product["groupID"], product, esClient, res, response);
-                                        }
+                                if (result.length != 1) {
+                                    createProductGroup(dbClient, pgcollection, product, esClient, res, response);
+                                } else {
+                                    updateProductGroup(dbClient, pgcollection, product["groupID"], product, esClient, res, response);
+                                }
 
-                                });
-
-                
                             });
 
 
+                        });
 
-                        }  else {
 
-                            response[apiResponseKeySuccess] = false;
-                            response[apiResponseKeyCode] = apiResponseCodeInvalid; 
-                            response[apiResponseKeyMessage] = "Product with the mentioned SKU already exists, if you want to update any field(s) please use the PUT method ...";
-                            res.json(response);
-                            res.end();
-            
-                        }  
+
+                    } else {
+
+                        response[apiResponseKeySuccess] = false;
+                        response[apiResponseKeyCode] = apiResponseCodeInvalid;
+                        response[apiResponseKeyMessage] = "Product with the mentioned SKU already exists, if you want to update any field(s) please use the PUT method ...";
+                        res.json(response);
+                        res.end();
+
+                    }
 
 
                 });
 
             });
 
-    });
+        });
 
-    
-    app.put('/catalog/'+ apiVersion +'/products',
+
+    app.put('/catalog/' + apiVersion + '/products',
 
         [
             check('sku').exists().withMessage("SKU should be present ..."),
@@ -898,11 +905,11 @@ var main = function (rc, esc) {
 
             check('regularPrice').exists().withMessage("Regular Price should be present ..."),
             check('regularPrice').isDecimal().withMessage("Regular Price should be numeric ..."),
-            
+
             check('regularPrice').custom(regularPrice => {
 
                 if (regularPrice < 0) {
-                  throw new Error('Regular Price cannot be less than 0 ...')
+                    throw new Error('Regular Price cannot be less than 0 ...')
                 } else {
                     return true
                 }
@@ -910,12 +917,12 @@ var main = function (rc, esc) {
             }),
 
             check('promotionPrice').exists().withMessage("Promotion Price should be present ..."),
-            check('promotionPrice').isDecimal().withMessage("Promotion Price should be numeric ..."),   
-            
+            check('promotionPrice').isDecimal().withMessage("Promotion Price should be numeric ..."),
+
             check('promotionPrice').custom(promotionPrice => {
 
                 if (promotionPrice < 0) {
-                  throw new Error('Promotion Price cannot be less than 0 ...')
+                    throw new Error('Promotion Price cannot be less than 0 ...')
                 } else {
                     return true
                 }
@@ -924,17 +931,17 @@ var main = function (rc, esc) {
 
             check('quantity').exists().withMessage("Quantity should be present ..."),
             check('quantity').isInt().withMessage("Quantity should be integer ..."),
-            
+
             check('quantity').custom(quantity => {
 
                 if (quantity < 0) {
-                  throw new Error('Quantity cannot be less than 0 ...')
+                    throw new Error('Quantity cannot be less than 0 ...')
                 } else {
                     return true
                 }
 
             }),
-            
+
             check('images').exists().withMessage("Valid image URLs are mandatory for good user experience ..."),
             check('images').isURL().withMessage("Valid image URLs are mandatory for good user experience ..."),
             check('searchKeywords').exists().withMessage("searchKeywords field should be populated with relevant keywords for good quality search ..."),
@@ -954,115 +961,115 @@ var main = function (rc, esc) {
 
             const product = new Product(req.body);
 
-            redisClient.get(req.headers['x-access-token'], function(err, customer_domain) {
+            redisClient.get(req.headers['x-access-token'], function (err, customer_domain) {
 
                 if (err) {
                     apiResponseError(res);
                     throw err;
                 }
 
-                    var query = { "sku": req.body.sku };
-                    let pcollection = customer_domain + "." + productsCollection;
-                    let pgcollection = customer_domain + "." + productGroupsCollection;
+                var query = { "sku": req.body.sku };
+                let pcollection = customer_domain + "." + productsCollection;
+                let pgcollection = customer_domain + "." + productGroupsCollection;
 
-                    dbClient.db(externalDB).collection(pcollection).find(query).toArray(function(err, result) {
+                dbClient.db(externalDB).collection(pcollection).find(query).toArray(function (err, result) {
 
-                        if (err) {
-                            apiResponseError(res);
-                            throw err;
-                        }
-        
-                        res.setHeader('Content-Type', 'application/json');
-                        response = new Object();
+                    if (err) {
+                        apiResponseError(res);
+                        throw err;
+                    }
 
-                        if(result.length == 0) {
+                    res.setHeader('Content-Type', 'application/json');
+                    response = new Object();
 
-                            dbClient.db(externalDB).collection(pcollection).insertOne(product, function(err, result) {
+                    if (result.length == 0) {
+
+                        dbClient.db(externalDB).collection(pcollection).insertOne(product, function (err, result) {
+
+                            if (err) {
+                                apiResponseError(res);
+                                throw err;
+                            }
+
+                            let gQuery = { "groupID": product["groupID"] };
+
+                            dbClient.db(externalDB).collection(pgcollection).find(gQuery).toArray(function (err, result) {
 
                                 if (err) {
                                     apiResponseError(res);
                                     throw err;
                                 }
-                
-                                let gQuery = { "groupID": product["groupID"] };
 
-                                dbClient.db(externalDB).collection(pgcollection).find(gQuery).toArray(function (err, result) {
+                                response[apiResponseKeySuccess] = true;
+                                response[apiResponseKeyCode] = apiResponseCodeOk;
+                                response["response"] = product;
 
-                                    if (err) {
-                                        apiResponseError(res);
-                                        throw err;
-                                    }
-                    
-                                    response[apiResponseKeySuccess] = true;
-                                    response[apiResponseKeyCode] = apiResponseCodeOk; 
-                                    response["response"] = product;
-
-                                        if (result.length != 1) {
-                                            createProductGroup(dbClient, pgcollection, product, esClient, res, response);
-                                        } else {
-                                            updateProductGroup(dbClient, pgcollection, product["groupID"], product, esClient, res, response);
-                                        } 
-
-                                });
-
-
+                                if (result.length != 1) {
+                                    createProductGroup(dbClient, pgcollection, product, esClient, res, response);
+                                } else {
+                                    updateProductGroup(dbClient, pgcollection, product["groupID"], product, esClient, res, response);
+                                }
 
                             });
 
-                        }  else {
 
-                            product["_id"] = result[0]["_id"];
 
-                            dbClient.db(externalDB).collection(pcollection).updateOne(query, product, function(err, result) {
-                                
+                        });
+
+                    } else {
+
+                        product["_id"] = result[0]["_id"];
+
+                        dbClient.db(externalDB).collection(pcollection).updateOne(query, product, function (err, result) {
+
+                            if (err) {
+                                apiResponseError(res);
+                                throw err;
+                            }
+
+                            redisClient.del(req.url + req.body.sku);
+                            redisClient.set(req.url + req.body.sku, JSON.stringify(product));
+                            redisClient.del('/catalog/' + apiVersion + '/productgroups/' + product["groupID"]);
+
+                            let gQuery = { "groupID": product["groupID"] };
+
+                            dbClient.db(externalDB).collection(pgcollection).find(gQuery).toArray(function (err, result) {
+
                                 if (err) {
                                     apiResponseError(res);
                                     throw err;
                                 }
-                                                
-                                redisClient.del(req.url + req.body.sku);
-                                redisClient.set(req.url + req.body.sku, JSON.stringify(product));
-                                redisClient.del('/catalog/' + apiVersion + '/productgroups/' + product["groupID"]);
 
-                                let gQuery = { "groupID": product["groupID"] };
+                                response[apiResponseKeySuccess] = true;
+                                response[apiResponseKeyCode] = apiResponseCodeOk;
+                                response[apiResponseKeyMessage] = "Product Updated";
+                                response["response"] = product;
 
-                                dbClient.db(externalDB).collection(pgcollection).find(gQuery).toArray(function (err, result) {
-
-                                    if (err) {
-                                        apiResponseError(res);
-                                        throw err;
-                                    }
-
-                                    response[apiResponseKeySuccess] = true;
-                                    response[apiResponseKeyCode] = apiResponseCodeOk; 
-                                    response[apiResponseKeyMessage] = "Product Updated";
-                                    response["response"] = product;
-    
-                                        if (result.length == 1) {
-                                            updateProductGroup(dbClient, pgcollection, product["groupID"], product, esClient, res, response);
-                                        } else {
-                                            res.end();
-                                        }
-
-                                });
-                                
-
+                                if (result.length == 1) {
+                                    updateProductGroup(dbClient, pgcollection, product["groupID"], product, esClient, res, response);
+                                } else {
+                                    res.end();
+                                }
 
                             });
 
 
 
-                        }  
+                        });
 
 
-                    });
 
-            });        
-
-    });
+                    }
 
 
-    app.delete('/catalog/'+ apiVersion +'/products/:SKU',
+                });
+
+            });
+
+        });
+
+
+    app.delete('/catalog/' + apiVersion + '/products/:SKU',
 
         [
             check('SKU').exists().withMessage("SKU should be present ..."),
@@ -1074,7 +1081,7 @@ var main = function (rc, esc) {
 
         (req, res) => {
 
-            redisClient.get(req.headers['x-access-token'], function(err, customer_domain) {
+            redisClient.get(req.headers['x-access-token'], function (err, customer_domain) {
 
                 if (err) {
                     apiResponseError(res);
@@ -1084,58 +1091,58 @@ var main = function (rc, esc) {
                 let pcollection = customer_domain + "." + productsCollection;
                 let pgcollection = customer_domain + "." + productGroupsCollection;
 
-                
-                    let sku = req.params.SKU;
-                    res.setHeader('Content-Type', 'application/json');
-                    var query = { "sku" : sku };
-                    response = new Object();
 
-                    dbClient.db(externalDB).collection(pcollection).find(query).toArray(function (err, result) {      
-                        
+                let sku = req.params.SKU;
+                res.setHeader('Content-Type', 'application/json');
+                var query = { "sku": sku };
+                response = new Object();
+
+                dbClient.db(externalDB).collection(pcollection).find(query).toArray(function (err, result) {
+
+                    if (err) {
+                        apiResponseError(res);
+                        throw err;
+                    }
+
+                    if (result == null || result.length == 0) {
+
+                        response[apiResponseKeySuccess] = false;
+                        response[apiResponseKeyCode] = apiResponseCodeInvalid;
+                        response[apiResponseKeyMessage] = "Product with SKU " + sku + " does not exist ...";
+                        res.json(response);
+                        res.end();
+                        return;
+
+                    }
+
+                    let pgid = result[0]["groupID"];
+
+                    dbClient.db(externalDB).collection(pcollection).deleteOne(query, function (err, result) {
+
                         if (err) {
                             apiResponseError(res);
                             throw err;
                         }
-                                 
-                        if (result == null || result.length == 0) {
 
-                            response[apiResponseKeySuccess] = false;
-                            response[apiResponseKeyCode] = apiResponseCodeInvalid; 
-                            response[apiResponseKeyMessage] = "Product with SKU " + sku + " does not exist ...";
-                            res.json(response);
-                            res.end();
-                            return;
+                        redisClient.del(req.url);
+                        redisClient.del('/catalog/' + apiVersion + '/productgroups/' + pgid);
 
-                        }
+                        response[apiResponseKeySuccess] = true;
+                        response[apiResponseKeyCode] = apiResponseCodeOk;
+                        response[apiResponseKeyMessage] = "Product with SKU " + sku + " deleted and the product group is updated ...";
 
-                        let pgid = result[0]["groupID"];
-
-                        dbClient.db(externalDB).collection(pcollection).deleteOne(query, function(err, result) {
-
-                            if (err) {
-                                apiResponseError(res);
-                                throw err;
-                            }
-                                        
-                            redisClient.del(req.url);
-                            redisClient.del('/catalog/' + apiVersion + '/productgroups/' + pgid);
-
-                            response[apiResponseKeySuccess] = true;
-                            response[apiResponseKeyCode] = apiResponseCodeOk; 
-                            response[apiResponseKeyMessage] = "Product with SKU " + sku + " deleted and the product group is updated ...";
-
-                            deleteProductInProductGroup(esClient, dbClient, pgcollection, pgid, sku, res, response);
-                            return;
-
-                        });                                
+                        deleteProductInProductGroup(esClient, dbClient, pgcollection, pgid, sku, res, response);
+                        return;
 
                     });
 
-            });
-        
-    });
+                });
 
-    app.delete('/catalog/'+ apiVersion +'/productgroups/:PGID',
+            });
+
+        });
+
+    app.delete('/catalog/' + apiVersion + '/productgroups/:PGID',
 
         [
             check('PGID').exists().withMessage("PGID should be present ..."),
@@ -1147,91 +1154,91 @@ var main = function (rc, esc) {
 
         (req, res) => {
 
-            redisClient.get(req.headers['x-access-token'], function(err, customer_domain) {
+            redisClient.get(req.headers['x-access-token'], function (err, customer_domain) {
 
                 if (err) {
                     apiResponseError(res);
                     throw err;
                 }
 
-                    let pgid = req.params.PGID;
-                    res.setHeader('Content-Type', 'application/json');
-                    var query = { "groupID" : pgid };
-                    response = new Object();
-                    let pg = new ProductGroup();
+                let pgid = req.params.PGID;
+                res.setHeader('Content-Type', 'application/json');
+                var query = { "groupID": pgid };
+                response = new Object();
+                let pg = new ProductGroup();
 
-                    let pcollection = customer_domain + "." + productsCollection;
-                    let pgcollection = customer_domain + "." + productGroupsCollection;
+                let pcollection = customer_domain + "." + productsCollection;
+                let pgcollection = customer_domain + "." + productGroupsCollection;
 
 
-                    dbClient.db(externalDB).collection(pgcollection).find(query).toArray(function (err, result) {
+                dbClient.db(externalDB).collection(pgcollection).find(query).toArray(function (err, result) {
+
+                    if (err) {
+                        apiResponseError(res);
+                        throw err;
+                    }
+
+                    if (result == null || result.length == 0) {
+
+                        response[apiResponseKeySuccess] = false;
+                        response[apiResponseKeyCode] = apiResponseCodeInvalid;
+                        response[apiResponseKeyMessage] = "Product Group with ID " + pgid + " does not exist ...";
+                        res.json(response);
+                        res.end();
+                        return;
+
+                    } else {
+                        pg = new ProductGroup(result[0]);
+                    }
+
+                    let pskus = result[0]["productSKUs"];
+
+                    var pdelQuery = { 'sku': { '$in': pskus } };
+
+                    dbClient.db(externalDB).collection(pcollection).deleteMany(pdelQuery, function (err, result) {
+
 
                         if (err) {
                             apiResponseError(res);
                             throw err;
                         }
-        
-                        if (result == null || result.length == 0) {
 
-                            response[apiResponseKeySuccess] = false;
-                            response[apiResponseKeyCode] = apiResponseCodeInvalid; 
-                            response[apiResponseKeyMessage] = "Product Group with ID " + pgid + " does not exist ...";
-                            res.json(response);
-                            res.end();
-                            return;
-
-                        } else {
-                            pg = new ProductGroup(result[0]);
-                        }
-
-                        let pskus = result[0]["productSKUs"];
-
-                        var pdelQuery = {'sku': { '$in' : pskus }};
-
-                        dbClient.db(externalDB).collection(pcollection).deleteMany(pdelQuery, function(err, result) {
-
+                        dbClient.db(externalDB).collection(pgcollection).deleteOne(query, function (err, result) {
 
                             if (err) {
                                 apiResponseError(res);
                                 throw err;
                             }
-            
-                                dbClient.db(externalDB).collection(pgcollection).deleteOne(query, function(err, result) {
-                                    
-                                    if (err) {
-                                        apiResponseError(res);
-                                        throw err;
-                                    }
-                    
-                                    redisClient.del(req.url);
 
-                                    function removeCacheKeysForSubProducts(sku, index) {
-                                        redisClient.del('/catalog/' + apiVersion + '/products/' + sku);
-                                    }
+                            redisClient.del(req.url);
 
-                                    pskus.forEach(removeCacheKeysForSubProducts);
+                            function removeCacheKeysForSubProducts(sku, index) {
+                                redisClient.del('/catalog/' + apiVersion + '/products/' + sku);
+                            }
 
-                                    response = new Object();
-                                    response[apiResponseKeySuccess] = true;
-                                    response[apiResponseKeyCode] = apiResponseCodeOk; 
-                                    response[apiResponseKeyMessage] = "Product group is now deleted ...";
+                            pskus.forEach(removeCacheKeysForSubProducts);
 
-                                    deleteDocumentinES(esClient, pgcollection, pgid, res, response);
+                            response = new Object();
+                            response[apiResponseKeySuccess] = true;
+                            response[apiResponseKeyCode] = apiResponseCodeOk;
+                            response[apiResponseKeyMessage] = "Product group is now deleted ...";
 
-
-                                });
-
-
-                            });
+                            deleteDocumentinES(esClient, pgcollection, pgid, res, response);
 
 
                         });
 
 
+                    });
+
+
+                });
+
+
             });
-        
-    });    
-   
+
+        });
+
     app.listen(apiPort, () => { console.log(`CatalogAPI is now listening at the port ${apiPort} ...`); });
 
 };

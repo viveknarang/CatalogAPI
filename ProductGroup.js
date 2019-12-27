@@ -12,7 +12,7 @@ const ProductGroup = new Schema({
     },
     description: {
         type: String
-    },    
+    },
     regularPriceMin: {
         type: Number
     },
@@ -40,7 +40,7 @@ const ProductGroup = new Schema({
     sizes: {
         type: Array
     },
-    images:{ 
+    images: {
         type: Array
     },
     searchKeywords: {
