@@ -48,7 +48,9 @@ const Product = new Schema({
     },
     attributes: {
         type: Map
-    }
+    },
+
+    _id: false
 
 });
 

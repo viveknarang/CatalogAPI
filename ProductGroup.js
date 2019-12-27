@@ -13,11 +13,17 @@ const ProductGroup = new Schema({
     description: {
         type: String
     },    
-    regularPriceRange: {
-        type: Array
+    regularPriceMin: {
+        type: Number
     },
-    promotionPriceRange: {
-        type: Array
+    regularPriceMax: {
+        type: Number
+    },
+    promotionPriceMin: {
+        type: Number
+    },
+    promotionPriceMax: {
+        type: Number
     },
     active: {
         type: Boolean
@@ -42,7 +48,9 @@ const ProductGroup = new Schema({
     },
     products: {
         type: Map
-    }
+    },
+
+    _id: false
 
 });
 

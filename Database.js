@@ -19,14 +19,13 @@ module.exports = {
 
     connectToServer: function (callback) {
 
-        console.log("Connecting to Mongo ...");
-
         MongoClient.connect(url, { useNewUrlParser: true }, function (err, client) {
 
             _client = client;
 
             return callback(err);
         });
+
     },
 
     getClient: function () {

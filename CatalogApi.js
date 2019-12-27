@@ -35,7 +35,7 @@ let apiResponseErrorStatus = properties.get('api.response.error.status');
 
 var app = express();
 let redisClient = null;
-let solrClient = null;
+let esClient = null;
 
 app.use(compression());
 app.use(bodyParser.json());
@@ -86,29 +86,49 @@ function validateInput(req, res, next) {
     res.status(422).json({ errors: result.array() });
 }
 
-function indexDocumentinSolr(solrClient, document) {
+function indexDocumentinES(esClient, index, document, res, response) {
 
     pg = new ProductGroup(document);
 
-    solrClient.add(pg.toObject(),function(err,obj){
+    esClient.index({
+        
+        index: (index + '.index').toLowerCase(),
 
-        if(err){
-            console.log(err);
-        }else{
-            solrClient.commit(function(err,obj){
+        id: pg["groupID"],
+        
+        body: pg
 
-                if(err){
-                    console.log(err);
-                }
+      }, {}, (err, result) => {
 
-            });
-        }
+        if (err) console.log(err);
 
-     });
+        res.json(response);
+        res.end();
+
+      });
 
 }
 
-function createProductGroup(sdbClient, scollection, product, solrClient) {
+function deleteDocumentinES(esClient, index, pgid, res, response) {
+
+    esClient.delete({
+        
+        index: (index + '.index').toLowerCase(),
+
+        id: pgid,
+        
+      }, {}, (err, result) => {
+
+        if (err) console.log(err);
+
+        res.json(response);
+        res.end();
+
+      });
+
+}
+
+function createProductGroup(sdbClient, scollection, product, esClient, res, response) {
 
 
     let productMap = new Map();
@@ -135,8 +155,10 @@ function createProductGroup(sdbClient, scollection, product, solrClient) {
                                 groupID : product["groupID"], 
                                 name : product["name"],
                                 description : product["description"],
-                                regularPriceRange : [product["regularPrice"], product["regularPrice"]],
-                                promotionPriceRange : [product["promotionPrice"], product["promotionPrice"]],
+                                regularPriceMin : product["regularPrice"],
+                                regularPriceMax : product["regularPrice"],
+                                promotionPriceMin : product["promotionPrice"],
+                                promotionPriceMax : product["promotionPrice"],
                                 active : product["active"],
                                 productSKUs : [product["sku"]],
                                 colors : [product["color"]],
@@ -148,18 +170,19 @@ function createProductGroup(sdbClient, scollection, product, solrClient) {
 
                               });
 
+
     sdbClient.db(externalDB).collection(scollection).insertOne(pg, function(err, result) {
 
         if (err) throw err;
 
-        indexDocumentinSolr(solrClient, pg);
+        indexDocumentinES(esClient, scollection, pg, res, response);
 
     });
 
 }
 
 
-function updateProductGroup(sdbClient, scollection, pgid, uProduct, solrClient) {
+function updateProductGroup(sdbClient, scollection, pgid, uProduct, esClient, res, response) {
 
     var query = { "groupID" : pgid };
     
@@ -233,10 +256,10 @@ function updateProductGroup(sdbClient, scollection, pgid, uProduct, solrClient) 
 
             }
 
-            pg["regularPriceRange"][0] = nrpmin;
-            pg["regularPriceRange"][1] = nrpmax;            
-            pg["promotionPriceRange"][0] = nppmin;
-            pg["promotionPriceRange"][1] = nppmax;
+            pg["regularPriceMin"] = nrpmin;            
+            pg["regularPriceMax"] = nrpmax;            
+            pg["promotionPriceMin"] = nppmin;
+            pg["promotionPriceMax"] = nppmax;
             pg["active"] = nActive;
             pg["name"] = productName;
             pg["description"] = productDescription;
@@ -254,8 +277,10 @@ function updateProductGroup(sdbClient, scollection, pgid, uProduct, solrClient) 
                                         "description" : pg["description"],
                                         "productSKUs" : pg["productSKUs"], 
                                         "active" : pg["active"], 
-                                        "promotionPriceRange" : pg["promotionPriceRange"], 
-                                        "regularPriceRange" : pg["regularPriceRange"],
+                                        "regularPriceMin" : pg["regularPrice"],
+                                        "regularPriceMax" : pg["regularPrice"],
+                                        "promotionPriceMin" : pg["promotionPrice"],
+                                        "promotionPriceMax" : pg["promotionPrice"],
                                         "colors" : pg["colors"],
                                         "brands" : pg["brands"],
                                         "sizes" : pg["sizes"],
@@ -267,52 +292,7 @@ function updateProductGroup(sdbClient, scollection, pgid, uProduct, solrClient) 
                                 
                 if (err) throw err;
 
-                var query = solrClient.createQuery().q({ 'groupID' : pgid });
-
-                solrClient.search(query, function(err,obj){
-
-                    if(err){
-
-                        console.log(err);
-                    
-                    }else{
-
-                        let data = {   
-                            "id" : obj.response.docs[0]["id"],
-                            "productSKUs" : { "set" : pg["productSKUs"] } , 
-                            "name" : { "set" : pg["name"] }, 
-                            "description" : { "set" : pg["description"] },
-                            "active" : { "set" : pg["active"] }, 
-                            "promotionPriceRange" : { "set" : pg["promotionPriceRange"] }, 
-                            "regularPriceRange" : { "set" : pg["regularPriceRange"] },
-                            "colors" : { "set" : pg["colors"] },
-                            "brands" : { "set" : pg["brands"] },
-                            "sizes" : { "set" : pg["sizes"] },
-                            "searchKeywords" : { "set" : pg["searchKeywords"] },
-                            "category" : { "set" : pg["category"] }                                   
-                        };
-
-                        solrClient.atomicUpdate(data,function(err,obj){
-
-                            if(err){
-                                console.log(err);
-                            }else{
-                                solrClient.commit(function(err,obj){
-                    
-                                    if(err){
-                                        console.log(err);
-                                    }
-                    
-                                });
-                            }
-                    
-                         });
-
-                    }
-            
-                 });
-
-                
+                indexDocumentinES(esClient, scollection, pg, res, response);                
 
             });
 
@@ -324,7 +304,7 @@ function updateProductGroup(sdbClient, scollection, pgid, uProduct, solrClient) 
 
 }
 
-function deleteProductInProductGroup(dbClient, pgcollection, pgid, sku, response, res) {
+function deleteProductInProductGroup(esClient, dbClient, pgcollection, pgid, sku, res, response) {
 
     var query = { "groupID" : pgid };
         
@@ -396,10 +376,10 @@ function deleteProductInProductGroup(dbClient, pgcollection, pgid, sku, response
 
         }
 
-        pg["regularPriceRange"][0] = nrpmin;
-        pg["regularPriceRange"][1] = nrpmax;        
-        pg["promotionPriceRange"][0] = nppmin;
-        pg["promotionPriceRange"][1] = nppmax;
+        pg["regularPriceMin"] = nrpmin;            
+        pg["regularPriceMax"] = nrpmax;            
+        pg["promotionPriceMin"] = nppmin;
+        pg["promotionPriceMax"] = nppmax;
         pg["active"] = nActive;
         pg["productSKUs"] = [...new Set(nProductSKUs)];
         pg["colors"] = [...new Set(ncolors)]; 
@@ -411,8 +391,10 @@ function deleteProductInProductGroup(dbClient, pgcollection, pgid, sku, response
         let setQuery = { $set: { "products" : products, 
                                  "productSKUs" : pg["productSKUs"] , 
                                  "active" : pg["active"], 
-                                 "promotionPriceRange" : pg["promotionPriceRange"], 
-                                 "regularPriceRange" : pg["regularPriceRange"],
+                                 "regularPriceMin" : pg["regularPrice"],
+                                 "regularPriceMax" : pg["regularPrice"],
+                                 "promotionPriceMin" : pg["promotionPrice"],
+                                 "promotionPriceMax" : pg["promotionPrice"],
                                  "colors" : pg["colors"],
                                  "brands" : pg["brands"],
                                  "sizes" : pg["sizes"],
@@ -425,54 +407,8 @@ function deleteProductInProductGroup(dbClient, pgcollection, pgid, sku, response
                                         
                 if (err) throw err;
 
-
-
-                var query = solrClient.createQuery().q({ 'groupID' : pgid });
-
-                solrClient.search(query, function(err,obj){
-
-                    if(err){
-
-                        console.log(err);
-                    
-                    }else{
-
-                        let data = {   
-                            "id" : obj.response.docs[0]["id"],
-                            "productSKUs" : { "set" : pg["productSKUs"] } , 
-                            "active" : { "set" : pg["active"] }, 
-                            "promotionPriceRange" : { "set" : pg["promotionPriceRange"] }, 
-                            "regularPriceRange" : { "set" : pg["regularPriceRange"] },
-                            "colors" : { "set" : pg["colors"] },
-                            "brands" : { "set" : pg["brands"] },
-                            "sizes" : { "set" : pg["sizes"] },
-                            "searchKeywords" : { "set" : pg["searchKeywords"] },
-                            "category" : { "set" : pg["category"] }                                   
-                        };
-
-                        solrClient.atomicUpdate(data,function(err,obj){
-
-                            if(err){
-                                console.log(err);
-                            }else{
-                                solrClient.commit(function(err,obj){
-                    
-                                    if(err){
-                                        console.log(err);
-                                    }
-
-                                    res.json(response);
-                                    res.end();
-                                    return;
-                    
-                                });
-                            }
-                    
-                         });
-
-                    }   
-                    
-                });
+                indexDocumentinES(esClient, pgcollection, pg, res, response);                
+                   
 
             });
 
@@ -488,10 +424,10 @@ function apiResponseError(res) {
     res.end();
 }
 
-var main = function (rc, sc) {
+var main = function (rc, esc) {
 
     redisClient = rc;
-    solrClient = sc;
+    esClient = esc;
 
     var dbClient = mongoUtil.getClient();    
 
@@ -796,21 +732,22 @@ var main = function (rc, sc) {
                                         apiResponseError(res);
                                         throw err;
                                     }
-                    
+
+                                    
+                                    response[apiResponseKeySuccess] = true;
+                                    response[apiResponseKeyCode] = apiResponseCodeOk; 
+                                    response["response"] = product;
+                                    redisClient.del('/catalog/' + apiVersion + '/productgroups/' + product["groupID"]);
+    
+
                                         if (result.length != 1) {
-                                            createProductGroup(dbClient, pgcollection, product, solrClient);
+                                            createProductGroup(dbClient, pgcollection, product, esClient, res ,response);
                                         } else {
-                                            updateProductGroup(dbClient, pgcollection, product["groupID"], product, solrClient);
+                                            updateProductGroup(dbClient, pgcollection, product["groupID"], product, esClient, res, response);
                                         }
 
                                 });
 
-                                response[apiResponseKeySuccess] = true;
-                                response[apiResponseKeyCode] = apiResponseCodeOk; 
-                                response["response"] = product;
-                                redisClient.del('/catalog/' + apiVersion + '/productgroups/' + product["groupID"]);
-                                res.json(response);
-                                res.end();
                 
                             });
 
@@ -939,19 +876,19 @@ var main = function (rc, sc) {
                                         throw err;
                                     }
                     
+                                    response[apiResponseKeySuccess] = true;
+                                    response[apiResponseKeyCode] = apiResponseCodeOk; 
+                                    response["response"] = product;
+
                                         if (result.length != 1) {
-                                            createProductGroup(dbClient, pgcollection, product, solrClient);
+                                            createProductGroup(dbClient, pgcollection, product, esClient);
                                         } else {
-                                            updateProductGroup(dbClient, pgcollection, product["groupID"], product, solrClient);
+                                            updateProductGroup(dbClient, pgcollection, product["groupID"], product, esClient, res, response);
                                         } 
 
                                 });
 
-                                response[apiResponseKeySuccess] = true;
-                                response[apiResponseKeyCode] = apiResponseCodeOk; 
-                                response["response"] = product;
-                                res.json(response);
-                                res.end(); 
+
 
                             });
 
@@ -978,19 +915,21 @@ var main = function (rc, sc) {
                                         apiResponseError(res);
                                         throw err;
                                     }
-                    
+
+                                    response[apiResponseKeySuccess] = true;
+                                    response[apiResponseKeyCode] = apiResponseCodeOk; 
+                                    response[apiResponseKeyMessage] = "Product Updated";
+                                    response["response"] = product;
+    
                                         if (result.length == 1) {
-                                            updateProductGroup(dbClient, pgcollection, product["groupID"], product, solrClient);
-                                        } 
+                                            updateProductGroup(dbClient, pgcollection, product["groupID"], product, esClient, res, response);
+                                        } else {
+                                            res.end();
+                                        }
 
                                 });
                                 
-                                response[apiResponseKeySuccess] = true;
-                                response[apiResponseKeyCode] = apiResponseCodeOk; 
-                                response[apiResponseKeyMessage] = "Product Updated";
-                                response["response"] = product;
-                                res.json(response);
-                                res.end();
+
 
                             });
 
@@ -1068,7 +1007,7 @@ var main = function (rc, sc) {
                             response[apiResponseKeyCode] = apiResponseCodeOk; 
                             response[apiResponseKeyMessage] = "Product with SKU " + sku + " deleted and the product group is updated ...";
 
-                            deleteProductInProductGroup(dbClient, pgcollection, pgid, sku, response, res);
+                            deleteProductInProductGroup(esClient, dbClient, pgcollection, pgid, sku, res, response);
                             return;
 
                         });                                
@@ -1155,29 +1094,13 @@ var main = function (rc, sc) {
 
                                     pskus.forEach(removeCacheKeysForSubProducts);
 
-                                    
-                                    solrClient.delete("groupID", pgid, function(err,obj){
+                                    response = new Object();
+                                    response[apiResponseKeySuccess] = true;
+                                    response[apiResponseKeyCode] = apiResponseCodeOk; 
+                                    response[apiResponseKeyMessage] = "Product group is now deleted ...";
 
-                                        if(err){
-                                            console.log(err);
-                                        }else{
-                                            solrClient.commit(function(err,obj){
-                                
-                                                if(err){
-                                                    console.log(err);
-                                                } else {
-                                                    response[apiResponseKeySuccess] = true;
-                                                    response[apiResponseKeyCode] = apiResponseCodeOk; 
-                                                    response[apiResponseKeyMessage] = "Product group is now deleted ...";
-                
-                                                    res.json(response);
-                                                    res.end();
-                                                }
-                                
-                                            });
-                                        }
-                                
-                                     });
+                                    deleteDocumentinES(esClient, pgcollection, pgid, res, response);
+
 
                                 });
 
@@ -1191,61 +1114,8 @@ var main = function (rc, sc) {
             });
         
     });    
-
-    app.get('/search/', authenticate, (req, res) => {
-
-
-        let equery = req.query.q;
-
-        var squery = solrClient.createQuery().edismax()
-                                        .q('*' + equery + '*')
-                                        .qf({ name : 1 , searchKeywords : 1, productSKUs : 1 })
-                                        .facet({field : [ "brands", "colors", "sizes"]});
-
-        solrClient.search(squery, function(err,obj){
-
-            if(err){
-                console.log(err);
-            }else{
-                res.json(obj);
-            }
-    
-         });
-    
-    });
-
-    // TEMP METHOD WILL BE REMOVED SOON ...
-    app.get('/search/delete/all', authenticate, (req, res) => {
-
-        var query = solrClient.createQuery().q({ '*' : '*'});
-
-        solrClient.deleteAll(query, function(err,obj){
-
-            if(err){
-                console.log(err);
-            }else{
-                solrClient.commit(function(err,obj){
-
-                    if(err){
-                        console.log(err);
-                    }
-
-                    response = new Object();
-                    response[apiResponseKeySuccess] = true;
-                    response[apiResponseKeyCode] = apiResponseCodeOk; 
-                    response[apiResponseKeyMessage] = "Product group is now deleted ...";
-
-                    res.json(response);
-                    res.end();
-    
-                });
-            }
-    
-         });
-    
-    });
-    
-    app.listen(apiPort, () => { console.log(`Listening port ${apiPort} ...`); });
+   
+    app.listen(apiPort, () => { console.log(`CatalogAPI is now listening at the port ${apiPort} ...`); });
 
 };
 

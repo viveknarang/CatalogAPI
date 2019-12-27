@@ -7,33 +7,35 @@ var properties = PropertiesReader('CatalogAPI.properties');
 let redisHost = properties.get('redis.host');
 let redisPort = properties.get('redis.port');
 
-let solrURL = properties.get('search.solr.url');
-let solrPort = properties.get('search.solr.port');
-let solrCollection = properties.get('search.solr.collection');
+let esURL = properties.get('search.elasticsearch.url');
+let esPort = properties.get('search.elasticsearch.port');
 
-var solr = require('solr-client');
+const { Client } = require('@elastic/elasticsearch')
+const esClient = new Client({ node: 'http://' + esURL + ":" + esPort })
 
-console.log("Connecting to Solr ...");
-var solrClient = solr.createClient({host : solrURL, port : solrPort, core : solrCollection});
 
-solrClient.ping(function(err,obj){
-  if(err){
-     
-      console.log(err);
-      return;
+    console.log("Connecting to Elastic Search ...");
+    esClient.ping({},{}, (err, result) => {
 
-  }else{
+          if (err) {
+            console.log(err)
+            return;
+          }
+          console.log("Elastic Search is responsing ...");
+          console.log("Connecting to MongoDB ...");
+          mongoUtil.connectToServer(function (err, client) {
 
-    mongoUtil.connectToServer(function (err, client) {
-
-      if (err) console.log(err);
-    
-      console.log("Connecting to redis ...");
-      let redisClient = redis.createClient(redisPort, redisHost);
-    
-      catalog.main(redisClient, solrClient);
-    
+            if (err) console.log(err);
+            console.log("MongoDB is responsing ...");
+            console.log("Finally, connecting to redis ...");
+            let redisClient = redis.createClient(redisPort, redisHost);
+            
+            catalog.main(redisClient, esClient);
+          
+          });
+  
     });
 
-  }
-});
+
+
+
