@@ -1192,36 +1192,22 @@ var main = function (rc, sc) {
         
     });    
 
-
-    app.get('/search', authenticate, (req, res) => {
-
-        var query = solrClient.createQuery().q({ '*' : '*'});
-
-        solrClient.search(query, function(err,obj){
-
-            if(err){
-                console.log(err);
-            }else{
-                res.json(obj.response.docs);
-            }
-    
-         });
-    
-    });
-
-    app.get('/search/:QUERY', authenticate, (req, res) => {
+    app.get('/search/', authenticate, (req, res) => {
 
 
-        let query = req.params.QUERY;
+        let equery = req.query.q;
 
-        var squery = solrClient.createQuery().q('*' + query + '*').qf({ name : 1 , searchKeywords : 1, productSKUs : 1 }).edismax();
+        var squery = solrClient.createQuery().edismax()
+                                        .q('*' + equery + '*')
+                                        .qf({ name : 1 , searchKeywords : 1, productSKUs : 1 })
+                                        .facet({field : [ "brands", "colors", "sizes"]});
 
         solrClient.search(squery, function(err,obj){
 
             if(err){
                 console.log(err);
             }else{
-                res.json(obj.response.docs);
+                res.json(obj);
             }
     
          });
