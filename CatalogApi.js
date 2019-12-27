@@ -729,15 +729,16 @@ var main = function (rc, esc) {
 
         [
             check('sku').exists().withMessage("SKU should be present ..."),
+            check('sku').isAlphanumeric().withMessage("SKU can only be made of alphanumeric characters (A-Z,a-z,0-9)..."),
             check('sku').isLength({ min: 3 }).withMessage("SKU Value needs to be more than 3 characters ..."),
             check('sku').isLength({ max: 50 }).withMessage("SKU Value cannot be more than 50 characters ..."),
-
 
             check('name').exists().withMessage("Product Name should be present ..."),
             check('name').isLength({ min: 3 }).withMessage("Product Name Value needs to be more than 3 characters ..."),
             check('name').isLength({ max: 250 }).withMessage("Product Name Value cannot be more than 250 characters ..."),
 
             check('groupID').exists().withMessage("Product Group ID should be present ..."),
+            check('groupID').isAlphanumeric().withMessage("Product Group ID can only be made of alphanumeric characters (A-Z,a-z,0-9)..."),
             check('groupID').isLength({ min: 3 }).withMessage("Product Group ID Value needs to be more than 3 characters ..."),
             check('groupID').isLength({ max: 50 }).withMessage("Product Group ID Value cannot be more than 50 characters ..."),
 
@@ -878,15 +879,16 @@ var main = function (rc, esc) {
 
         [
             check('sku').exists().withMessage("SKU should be present ..."),
+            check('sku').isAlphanumeric().withMessage("SKU can only be made of alphanumeric characters (A-Z,a-z,0-9)..."),
             check('sku').isLength({ min: 3 }).withMessage("SKU Value needs to be more than 3 characters ..."),
             check('sku').isLength({ max: 50 }).withMessage("SKU Value cannot be more than 50 characters ..."),
-
 
             check('name').exists().withMessage("Product Name should be present ..."),
             check('name').isLength({ min: 3 }).withMessage("Product Name Value needs to be more than 3 characters ..."),
             check('name').isLength({ max: 250 }).withMessage("Product Name Value cannot be more than 250 characters ..."),
 
             check('groupID').exists().withMessage("Product Group ID should be present ..."),
+            check('groupID').isAlphanumeric().withMessage("Product Group ID can only be made of alphanumeric characters (A-Z,a-z,0-9)..."),
             check('groupID').isLength({ min: 3 }).withMessage("Product Group ID Value needs to be more than 3 characters ..."),
             check('groupID').isLength({ max: 50 }).withMessage("Product Group ID Value cannot be more than 50 characters ..."),
 
@@ -951,7 +953,6 @@ var main = function (rc, esc) {
         (req, res) => {
 
             const product = new Product(req.body);
-            const dbProduct = null;
 
             redisClient.get(req.headers['x-access-token'], function(err, customer_domain) {
 
