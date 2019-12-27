@@ -881,7 +881,7 @@ var main = function (rc, esc) {
                                     response["response"] = product;
 
                                         if (result.length != 1) {
-                                            createProductGroup(dbClient, pgcollection, product, esClient);
+                                            createProductGroup(dbClient, pgcollection, product, esClient, res, response);
                                         } else {
                                             updateProductGroup(dbClient, pgcollection, product["groupID"], product, esClient, res, response);
                                         } 
