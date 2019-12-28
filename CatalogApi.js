@@ -54,7 +54,7 @@ function authenticate(req, res, next) {
         return res.json({
             apiResponseKeySuccess: false,
             apiResponseKeyCode: apiResponseCodeInvalid,
-            message: "Please insert the token (that you received at valid login) in the header of the API requests (Header KEY:'x-access-token' = 'your token') ..."
+            message: "Please insert the access token (that you received at valid login) in the header of the API requests (Header KEY:'x-access-token' = 'your access token') ..."
         });
     }
 
@@ -126,7 +126,7 @@ function indexDocumentinES(esClient, index, document, res, response) {
 
 }
 
-function searchInES(esClient, index, q, res, debug) {
+function searchInES(esClient, index, q, res, debug, redisClient, req) {
 
     esClient.search({
 
@@ -149,10 +149,12 @@ function searchInES(esClient, index, q, res, debug) {
         }
 
         if (debug) {
+            redisClient.set(req.url, JSON.stringify(result));
             res.json(result);
         } 
         else {
-        res.json(result["body"]["hits"]["hits"]);
+            redisClient.set(req.url, JSON.stringify(result["body"]["hits"]["hits"]));
+            res.json(result["body"]["hits"]["hits"]);
         }
         res.end();
 
@@ -1290,7 +1292,7 @@ var main = function (rc, esc) {
 
             let q = req.query.q;
             let debug = req.query.debug;
-            
+          
             redisClient.get(req.headers['x-access-token'], function (err, customer_domain) {
 
                 if (err) {
@@ -1300,7 +1302,26 @@ var main = function (rc, esc) {
 
                 let index = customer_domain + "." + productGroupsCollection;
 
-                searchInES(esClient, index, q, res, debug);
+                redisClient.get(req.url, function (err, cache_result) {
+
+                    if (err) {
+                        apiResponseError(res);
+                        throw err;
+                    }
+    
+                    if (cache_result == null || cache_result.length == 0) {
+    
+                            searchInES(esClient, index, q, res, debug, redisClient, req);
+
+                    } else {
+
+                        res.json(JSON.parse(cache_result));
+                        res.end();
+
+                    }
+
+
+                });
 
             });
 
