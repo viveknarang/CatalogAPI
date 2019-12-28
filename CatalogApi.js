@@ -1391,7 +1391,7 @@ var main = function (rc, esc) {
 
             check("debug").isBoolean().withMessage("debug flag can only have a boolean value (either true or false) ..."),
             check("facets").isBoolean().withMessage("facets flag can only have a boolean value (either true or false) ..."),
-            check("fields").isLength({ max: 50 }).withMessage("fields value cannot be more than 50 characters ...")
+            check("qfield").isLength({ max: 50 }).withMessage("fields value cannot be more than 50 characters ...")
         ],
 
         authenticate,
@@ -1403,10 +1403,10 @@ var main = function (rc, esc) {
             let q = req.query.q;
             let debug = req.query.debug;
             let standardFacets = req.query.facets;
-            let fields = req.query.fields;
+            let qfield = req.query.qfield;
 
-            if (fields == null) {
-                fields = ['name', 'productSKUs', 'searchKeywords', 'groupID'];
+            if (qfield == null) {
+                qfield = ['name', 'productSKUs', 'searchKeywords', 'groupID'];
             }
          
             redisClient.get(req.headers['x-access-token'], function (err, customer_domain) {
@@ -1427,7 +1427,7 @@ var main = function (rc, esc) {
     
                     if (cache_result == null || cache_result.length == 0) {
     
-                            searchInES(esClient, index, q, res, debug, redisClient, req, fields, standardFacets);
+                            searchInES(esClient, index, q, res, debug, redisClient, req, qfield, standardFacets);
 
                     } else {
 
