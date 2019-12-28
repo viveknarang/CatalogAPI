@@ -552,7 +552,7 @@ var main = function (rc, esc) {
         let id = req.query.id;
         let apiKey = req.query.apiKey;
 
-        var query = { "id": id, "apiKey": apiKey };
+        var query = { "id": id, "apiKey": apiKey, "active" : true };
 
         dbClient.db(internalDB).collection(customerCollection).find(query).toArray(function (err, result) {
 
@@ -575,12 +575,12 @@ var main = function (rc, esc) {
                 response["validFor"] = jwtTokenExpiry;
                 response[apiResponseKeySuccess] = true;
                 response[apiResponseKeyCode] = apiResponseCodeOk;
-                response[apiResponseKeyMessage] = "Access with valid credentials ...";
+                response[apiResponseKeyMessage] = "Access with valid credentials! Please include the token in the header of your subsequent API calls ...";
 
             } else {
                 response[apiResponseKeySuccess] = false;
                 response[apiResponseKeyCode] = apiResponseCodeInvalid;
-                response[apiResponseKeyMessage] = "Invalid credentials ...";
+                response[apiResponseKeyMessage] = "Invalid credentials or login attempt with valid credentials by an inactive customer!";
 
             }
 
