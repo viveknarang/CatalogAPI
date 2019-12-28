@@ -30,8 +30,12 @@ let apiVersion = properties.get('api.version');
 let apiResponseKeyMessage = properties.get('api.response.key.message');
 let apiResponseKeyCode = properties.get('api.response.key.code');
 let apiResponseKeySuccess = properties.get('api.response.key.success');
+let apiResponseKeyValidFor = properties.get('api.response.key.validFor');
+let apiResponseKeyResponse = properties.get('api.response.key.response');
+let apiResponseKeyToken = properties.get('api.response.key.token');
 let apiResponseErrorMessage = properties.get('api.response.error.message');
 let apiResponseErrorStatus = properties.get('api.response.error.status');
+
 let appName = properties.get('app.name');
 
 var app = express();
@@ -571,8 +575,8 @@ var main = function (rc, esc) {
                 redisClient.set(token, result[0]["name"] + "." + result[0]["secret"]);
                 redisClient.expire(token, jwtTokenExpiry);
 
-                response["token"] = token;
-                response["validFor"] = jwtTokenExpiry;
+                response[apiResponseKeyToken] = token;
+                response[apiResponseKeyValidFor] = jwtTokenExpiry;
                 response[apiResponseKeySuccess] = true;
                 response[apiResponseKeyCode] = apiResponseCodeOk;
                 response[apiResponseKeyMessage] = "Access with valid credentials! Please include the token in the header of your subsequent API calls ...";
@@ -848,7 +852,7 @@ var main = function (rc, esc) {
 
                                 response[apiResponseKeySuccess] = true;
                                 response[apiResponseKeyCode] = apiResponseCodeOk;
-                                response["response"] = product;
+                                response[apiResponseKeyResponse] = product;
                                 redisClient.del('/catalog/' + apiVersion + '/productgroups/' + product["groupID"]);
 
 
@@ -1003,7 +1007,7 @@ var main = function (rc, esc) {
 
                                 response[apiResponseKeySuccess] = true;
                                 response[apiResponseKeyCode] = apiResponseCodeOk;
-                                response["response"] = product;
+                                response[apiResponseKeyResponse] = product;
 
                                 if (result.length != 1) {
                                     createProductGroup(dbClient, pgcollection, product, esClient, res, response);
@@ -1044,7 +1048,7 @@ var main = function (rc, esc) {
                                 response[apiResponseKeySuccess] = true;
                                 response[apiResponseKeyCode] = apiResponseCodeOk;
                                 response[apiResponseKeyMessage] = "Product Updated";
-                                response["response"] = product;
+                                response[apiResponseKeyResponse] = product;
 
                                 if (result.length == 1) {
                                     updateProductGroup(dbClient, pgcollection, product["groupID"], product, esClient, res, response);
