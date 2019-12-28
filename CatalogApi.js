@@ -50,6 +50,14 @@ function authenticate(req, res, next) {
 
     let token = req.headers['x-access-token'];
 
+    if (token == null) {
+        return res.json({
+            apiResponseKeySuccess: false,
+            apiResponseKeyCode: apiResponseCodeInvalid,
+            message: "Please insert the token [T] (that you received at valid login) in the header of the API requests (set x-access-token=T) ..."
+        });
+    }
+
     jwt.verify(token, jwtKey, function (err, decoded) {
 
         if (!err) {
