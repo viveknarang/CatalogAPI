@@ -126,6 +126,40 @@ function indexDocumentinES(esClient, index, document, res, response) {
 
 }
 
+function searchInES(esClient, index, q, res, debug) {
+
+    esClient.search({
+
+        index: (index + '.index').toLowerCase(),
+
+        body: {
+            query: {
+                multi_match: {
+                    query: q,
+                    fields: ['name', 'productSKUs', 'searchKeywords', 'groupID']
+                  }
+            }
+          }
+      
+    }, {}, (err, result) => {
+
+        if (err) {
+            apiResponseError(res);
+            throw err;
+        }
+
+        if (debug) {
+            res.json(result);
+        } 
+        else {
+        res.json(result["body"]["hits"]["hits"]);
+        }
+        res.end();
+
+    });
+
+}
+
 function deleteDocumentinES(esClient, index, pgid, res, response) {
 
     esClient.delete({
@@ -1250,6 +1284,27 @@ var main = function (rc, esc) {
 
             });
 
+        });
+
+        app.get('/search/' + apiVersion + '/search', authenticate, (req, res) => {
+
+            let q = req.query.q;
+            let debug = req.query.debug;
+            
+            redisClient.get(req.headers['x-access-token'], function (err, customer_domain) {
+
+                if (err) {
+                    apiResponseError(res);
+                    throw err;
+                }
+
+                let index = customer_domain + "." + productGroupsCollection;
+
+                searchInES(esClient, index, q, res, debug);
+
+            });
+
+            
         });
 
     app.listen(apiPort, () => { console.log(appName + ` is now listening port ${apiPort} ...`); });
