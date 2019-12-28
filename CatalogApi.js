@@ -126,9 +126,9 @@ function indexDocumentinES(esClient, index, document, res, response) {
 
 }
 
-function searchInES(esClient, index, q, res, debug, redisClient, req) {
+function searchInES(esClient, index, q, res, debug, redisClient, req, queryFields, hasStandardFacets) {
 
-    esClient.search({
+    let arg = {
 
         index: (index + '.index').toLowerCase(),
 
@@ -136,26 +136,105 @@ function searchInES(esClient, index, q, res, debug, redisClient, req) {
             query: {
                 multi_match: {
                     query: q,
-                    fields: ['name', 'productSKUs', 'searchKeywords', 'groupID']
+                    fields: queryFields
                   }
             }
-          }
+        }
       
-    }, {}, (err, result) => {
+    };
+
+    if (hasStandardFacets == "true") {
+
+                arg.body.aggs = {
+                    "brands" : {
+                        terms : {
+                            field : "brands",
+                            size : 5
+                        }
+                    },
+                    "colors" : {
+                        terms : {
+                            field : "colors",
+                            size : 5
+                        }
+                    },"sizes" : {
+                        terms : {
+                            field : "sizes",
+                            size : 5
+                        }
+                    },
+                    "promotionPriceMin" : {
+                        range : {
+                            field : "promotionPriceMin",
+                            ranges : [
+                                { "from" : 0.0, "to" : 50.0 },
+                                { "from" : 50.0, "to" : 100.0 },
+                                { "from" : 100.0, "to" : 150.0 },
+                                { "from" : 150.0, "to" : 200.0 },
+                                { "from" : 200.0, "to" : 250.0 },
+                                { "from" : 250.0 }
+                            ]
+                        }
+                    },
+                    "promotionPriceMax" : {
+                        range : {
+                            field : "promotionPriceMax",
+                            ranges : [
+                                { "from" : 0.0, "to" : 50.0 },
+                                { "from" : 50.0, "to" : 100.0 },
+                                { "from" : 100.0, "to" : 150.0 },
+                                { "from" : 150.0, "to" : 200.0 },
+                                { "from" : 200.0, "to" : 250.0 },
+                                { "from" : 250.0 }
+                            ]
+                        }
+                    },
+                    "regularPriceMin" : {
+                        range : {
+                            field : "regularPriceMin",
+                            ranges : [
+                                { "from" : 0.0, "to" : 50.0 },
+                                { "from" : 50.0, "to" : 100.0 },
+                                { "from" : 100.0, "to" : 150.0 },
+                                { "from" : 150.0, "to" : 200.0 },
+                                { "from" : 200.0, "to" : 250.0 },
+                                { "from" : 250.0 }
+                            ]
+                        }
+                    },
+                    "regularPriceMax" : {
+                        range : {
+                            field : "regularPriceMax",
+                            ranges : [
+                                { "from" : 0.0, "to" : 50.0 },
+                                { "from" : 50.0, "to" : 100.0 },
+                                { "from" : 100.0, "to" : 150.0 },
+                                { "from" : 150.0, "to" : 200.0 },
+                                { "from" : 200.0, "to" : 250.0 },
+                                { "from" : 250.0 }
+                            ]
+                        }
+                    }
+                };
+
+    }
+    
+    esClient.search(arg, {}, (err, result) => {
 
         if (err) {
             apiResponseError(res);
             throw err;
         }
 
-        if (debug) {
+        if (debug == "true") {
             redisClient.set(req.url, JSON.stringify(result));
             res.json(result);
         } 
         else {
-            redisClient.set(req.url, JSON.stringify(result["body"]["hits"]["hits"]));
-            res.json(result["body"]["hits"]["hits"]);
+            redisClient.set(req.url, JSON.stringify(result["body"]));
+            res.json(result["body"]);
         }
+
         res.end();
 
     });
@@ -913,7 +992,6 @@ var main = function (rc, esc) {
                                 response[apiResponseKeyResponse] = product;
                                 redisClient.del('/catalog/' + apiVersion + '/productgroups/' + product["groupID"]);
 
-
                                 if (result.length != 1) {
                                     createProductGroup(dbClient, pgcollection, product, esClient, res, response);
                                 } else {
@@ -1311,7 +1389,8 @@ var main = function (rc, esc) {
             check("q").isLength({ max: 1024 }).withMessage("The main search query parameter [q] cannot be more than 1024 characters ..."),
             check("q").isAlphanumeric().withMessage("The main search query parameter [q] can only have alphanumeric characters ..."),
 
-            check("debug").isBoolean().withMessage("debug flag can only be a boolean value (either true or false) ...")
+            check("debug").isBoolean().withMessage("debug flag can only have a boolean value (either true or false) ..."),
+            check("facets").isBoolean().withMessage("facets flag can only have a boolean value (either true or false) ...")
         ],
 
         authenticate,
@@ -1322,6 +1401,7 @@ var main = function (rc, esc) {
 
             let q = req.query.q;
             let debug = req.query.debug;
+            let standardFacets = req.query.facets;
          
             redisClient.get(req.headers['x-access-token'], function (err, customer_domain) {
 
@@ -1341,7 +1421,7 @@ var main = function (rc, esc) {
     
                     if (cache_result == null || cache_result.length == 0) {
     
-                            searchInES(esClient, index, q, res, debug, redisClient, req);
+                            searchInES(esClient, index, q, res, debug, redisClient, req, ['name', 'productSKUs', 'searchKeywords', 'groupID'], standardFacets);
 
                     } else {
 
