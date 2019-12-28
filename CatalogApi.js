@@ -54,7 +54,7 @@ function authenticate(req, res, next) {
         return res.json({
             apiResponseKeySuccess: false,
             apiResponseKeyCode: apiResponseCodeInvalid,
-            message: "Please insert the token [T] (that you received at valid login) in the header of the API requests (set x-access-token=T) ..."
+            message: "Please insert the token (that you received at valid login) in the header of the API requests (Header KEY:'x-access-token' = 'your token') ..."
         });
     }
 
