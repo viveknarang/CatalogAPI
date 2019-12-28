@@ -595,7 +595,19 @@ var main = function (rc, esc) {
 
     });
 
-    app.get('/admin/' + apiVersion + '/customers/login/', function (req, res) {
+    app.get('/admin/' + apiVersion + '/customers/login/', 
+    
+    [
+        check('id').exists().withMessage("Customer ID [id] should be present ..."),
+        check('id').isLength({ max: 10 }).withMessage("Customer ID [id] value cannot be more than 10 characters ..."),
+
+        check('apiKey').exists().withMessage("API key [apiKey] should be present ..."),
+        check('apiKey').isLength({ max: 50 }).withMessage("API Key [apiKey] value cannot be more than 50 characters ..."),
+    ],
+
+    validateInput,
+    
+    (req, res) => {
 
         let id = req.query.id;
         let apiKey = req.query.apiKey;
@@ -641,10 +653,11 @@ var main = function (rc, esc) {
     });
 
 
-    app.get('/catalog/' + apiVersion + '/productgroups/:ID',
+    app.get('/catalog/' + apiVersion + '/productgroups/:PGID',
 
         [
-            check('ID').exists().withMessage("ID should be present ..."),
+            check('PGID').exists().withMessage("PGID should be present ..."),
+            check('PGID').isLength({ max: 50 }).withMessage("PGID value cannot be more than 50 characters ..."),
         ],
 
         authenticate,
@@ -653,7 +666,7 @@ var main = function (rc, esc) {
 
         (req, res) => {
 
-            let id = req.params.ID;
+            let id = req.params.PGID;
 
             res.setHeader('Content-Type', 'application/json');
 
@@ -715,6 +728,7 @@ var main = function (rc, esc) {
 
         [
             check('SKU').exists().withMessage("SKU should be present ..."),
+            check('SKU').isLength({ max: 50 }).withMessage("SKU Value cannot be more than 50 characters ..."),
         ],
 
         authenticate,
@@ -1122,6 +1136,7 @@ var main = function (rc, esc) {
 
         [
             check('SKU').exists().withMessage("SKU should be present ..."),
+            check('SKU').isLength({ max: 50 }).withMessage("SKU cannot be more than 50 characters ..."),
         ],
 
         authenticate,
@@ -1195,6 +1210,7 @@ var main = function (rc, esc) {
 
         [
             check('PGID').exists().withMessage("PGID should be present ..."),
+            check('PGID').isLength({ max: 50 }).withMessage("PGID cannot be more than 50 characters ..."),
         ],
 
         authenticate,
@@ -1288,11 +1304,25 @@ var main = function (rc, esc) {
 
         });
 
-        app.get('/search/' + apiVersion + '/search', authenticate, (req, res) => {
+        app.get('/search/' + apiVersion + '/search', 
+        
+        [
+            check("q").exists().withMessage("The main search query parameter [q] should be present ..."),
+            check("q").isLength({ max: 1024 }).withMessage("The main search query parameter [q] cannot be more than 1024 characters ..."),
+            check("q").isAlphanumeric().withMessage("The main search query parameter [q] can only have alphanumeric characters ..."),
+
+            check("debug").isBoolean().withMessage("debug flag can only be a boolean value (either true or false) ...")
+        ],
+
+        authenticate,
+
+        validateInput,
+
+        (req, res) => {
 
             let q = req.query.q;
             let debug = req.query.debug;
-          
+         
             redisClient.get(req.headers['x-access-token'], function (err, customer_domain) {
 
                 if (err) {
