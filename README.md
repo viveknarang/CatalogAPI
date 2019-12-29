@@ -1,19 +1,3 @@
----
-title: API Reference
-
-language_tabs: # must be one of https://git.io/vQNgJ
-##  - javascript  
-
-toc_footers:
-  - <a href='gallao.io'>Gallao E-commerce API</a>
-  - <a href='mailto:vivek.narang10@gmail.com'>Contact Us</a>
-
-includes:
-##  - errors
-
-search: true
----
-
 # Introduction
 
 This API provides you with several options to maintain your product catalog and search products in your catalog. 
