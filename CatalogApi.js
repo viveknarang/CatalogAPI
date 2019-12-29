@@ -45,16 +45,17 @@ let esClient = null;
 app.use(compression());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
+app.use("/docs", express.static(path.join(__dirname, '/docs')));
 
 function authenticate(req, res, next) {
 
-    let token = req.headers['x-api-key'];
+    let token = req.headers['x-access-token'];
 
     if (token == null) {
         return res.json({
             apiResponseKeySuccess: false,
             apiResponseKeyCode: apiResponseCodeInvalid,
-            message: "Please insert the access token (that you received at valid login) in the header of the API requests (Header KEY:'x-api-key' = 'your access token') ..."
+            message: "Please insert the access token (that you received at valid login) in the header of the API requests (Header KEY:'x-access-token' = 'your access token') ..."
         });
     }
 
@@ -658,19 +659,10 @@ var main = function (rc, esc) {
 
     app.get('/', (req, res) => {
 
+        console.log(path.join(__dirname, '/docs/stylesheets/'));
+
+
         res.sendFile(path.join(__dirname + '/docs/' + homepage));
-
-    });
-
-    app.get('/catalog', (req, res) => {
-
-        res.sendFile(path.join(__dirname + '/docs/' + catalogHomepage));
-
-    });
-
-    app.get('/admin', (req, res) => {
-
-        res.sendFile(path.join(__dirname + '/docs/' + adminHomepage));
 
     });
 
@@ -758,7 +750,7 @@ var main = function (rc, esc) {
 
                 if (cache_result == null || cache_result.length == 0) {
 
-                    redisClient.get(req.headers['x-api-key'], function (error, customer_domain) {
+                    redisClient.get(req.headers['x-access-token'], function (error, customer_domain) {
 
                         var query = { $or: [{ productSKUs: { $elemMatch: { $eq: id } } }, { groupID: id }] };
                         let pgcollection = customer_domain + "." + productGroupsCollection;
@@ -829,7 +821,7 @@ var main = function (rc, esc) {
 
                 if (cache_result == null || cache_result.length == 0) {
 
-                    redisClient.get(req.headers['x-api-key'], function (error, customer_domain) {
+                    redisClient.get(req.headers['x-access-token'], function (error, customer_domain) {
 
                         var query = { "sku": sku };
                         let pcollection = customer_domain + "." + productsCollection;
@@ -952,7 +944,7 @@ var main = function (rc, esc) {
 
             const product = new Product(req.body);
 
-            redisClient.get(req.headers['x-api-key'], function (error, customer_domain) {
+            redisClient.get(req.headers['x-access-token'], function (error, customer_domain) {
 
                 var query = { "sku": req.body.sku };
                 let pcollection = customer_domain + "." + productsCollection;
@@ -1102,7 +1094,7 @@ var main = function (rc, esc) {
 
             const product = new Product(req.body);
 
-            redisClient.get(req.headers['x-api-key'], function (err, customer_domain) {
+            redisClient.get(req.headers['x-access-token'], function (err, customer_domain) {
 
                 if (err) {
                     apiResponseError(res);
@@ -1223,7 +1215,7 @@ var main = function (rc, esc) {
 
         (req, res) => {
 
-            redisClient.get(req.headers['x-api-key'], function (err, customer_domain) {
+            redisClient.get(req.headers['x-access-token'], function (err, customer_domain) {
 
                 if (err) {
                     apiResponseError(res);
@@ -1297,7 +1289,7 @@ var main = function (rc, esc) {
 
         (req, res) => {
 
-            redisClient.get(req.headers['x-api-key'], function (err, customer_domain) {
+            redisClient.get(req.headers['x-access-token'], function (err, customer_domain) {
 
                 if (err) {
                     apiResponseError(res);
@@ -1409,7 +1401,7 @@ var main = function (rc, esc) {
                 qfield = ['name', 'productSKUs', 'searchKeywords', 'groupID'];
             }
          
-            redisClient.get(req.headers['x-api-key'], function (err, customer_domain) {
+            redisClient.get(req.headers['x-access-token'], function (err, customer_domain) {
 
                 if (err) {
                     apiResponseError(res);
