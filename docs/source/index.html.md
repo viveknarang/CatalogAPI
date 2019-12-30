@@ -5,7 +5,7 @@ language_tabs: # must be one of https://git.io/vQNgJ
 ##  - javascript  
 
 toc_footers:
-  - <a href='gallao.io'>Gallao E-commerce API</a>
+  - <span>API documentation version 1.1</span>
   - <a href='mailto:vivek.narang10@gmail.com'>Contact Us</a>
 
 includes:
@@ -18,22 +18,32 @@ search: true
 
 This API provides you with several options to maintain your product catalog and search products in your catalog. 
 
-With this API you can create, update and delete products in your product catalog. The API automatically manages the product groups for you. The product group is identified by the groupID field (i.e. all the products with the same groupID are combined in a single product group). While the API allows you to get and delete product groups by group ID, the API does not allow you to directly modify the product groups. The only way to modify product groups is to use API options for products. With this approach the API tries to ensure that the data is not corrupted. When you delete a product group, all the products in the group are automatically deleted. 
+With this API, you can create, update and delete products in your product catalog. The API automatically manages the product groups for you. The product group is identified by the groupID field (i.e. all the products with the same groupID are combined in a single product group). While the API allows you to get and delete product groups by groupID, the API does not allow you to directly modify the product groups. The only way to modify product groups is to use API endpoints for individual products. With this approach, the API tries to ensure that the data is not corrupted. When you delete a product group, all the products in the group are also automatically deleted. 
 
-The search API is fairly powerful. It allows features like search on a specific field or a set of fields. The search API responds with product groups where the query matches certain fields. Search API also allows you to select if you want the standard facets (work on advanced features in progress) to be included in the API response. In addtion to the features mentioned above, the API syncs the search index with changes in products/product groups, **in real-time**. Also, for efficiency and speed, the search and GET product/productgroup responses are cached. Upon any updates the cache is updated as well, as needed. 
+<aside class="notice">
+It is important to understand the concept of product groups. For search quality and other advanced features provided by our platform, products are grouped to form product groups. These product groups are essentially a product with different variations. Example: A shirt can be of multiple sizes and/or colors. So all of the variations of this shirt are grouped to form a product group.  
+</aside>
+
+The search API is fairly powerful too. It allows features like search on a specific field or a set of fields. The search API responds with product groups where the query matches certain fields. Search API also allows you to select the standard facets to be included in the API response. In addtion to the features mentioned above, the API automatically syncs the search index with changes in products/product groups, **in real-time**. Also, for efficiency and speed, the search and GET product/productgroup endpoints are cached. Upon any updates, the cache is updated as well. 
 
 We are continuously adding new features and improving this API, if you have any suggestions please reach out to us [here](mailto:vivek.narang10@gmail.com)
 
-API Powered by:
+API Powered by
 
-- NodeJS
-- Redis
-- Elastic Search
-- MongoDB
+- Node.js            
+- Redis             
+- Elasticsearch     
+- MongoDB           
+
+
+Team
+
+- Vivek Narang
+- Siddhartha Gupta
+
 
 <aside class="success">
-The current API version is: v1 
-Please replace {API version} with v1 in your API calls
+The current API version is: v1 Please replace {API version} with v1 in your API calls
 </aside>
 
 # API login
@@ -73,7 +83,7 @@ Please replace {API version} with v1 in your API calls
 }
 ```
 
-This endpoint gets your your API access token. You need to send your customer ID and the API key that we provided you for using our SaaS platform. Upon receiving your valid credentials, the API will respond with a token with additional information including the validFor key which tells you how long this access token is valid for. please set **x-access-token** to the value of the **token** key, in the header of your subsequent API calls. 
+This endpoint gets you your API access token. You need to send your customer ID and the API key that we provided you for using our platform. Upon receiving your valid credentials, the API will respond with a token with additional information including the validFor key which tells you how long this access token is valid for. Please set **x-access-token** to the value of the **token**, in the header of your subsequent API calls. 
 
 
 ### HTTP Request
@@ -85,10 +95,10 @@ This endpoint gets your your API access token. You need to send your customer ID
 Parameter | Description
 --------- | -----------
 id        | Your customer ID provided by us
-apiKey    | The apiKey that is sent by us
+apiKey    | The API key that is sent by us
 
 <aside class="warning">
-You do not need to invoke login too often. Please include the token that you receive upon a successful login, in your subsequent API calls until the token expires.
+You do not need to invoke login too often. Please include the token that you receive upon a successful login in your subsequent API calls, until the token expires.
 </aside>
 
 ### Response
@@ -106,7 +116,7 @@ With the field validFor in response, you can calculate the time after with your 
 </aside>
 
 
-# Products
+# Catalog API
 
 ## Add a new product
 
@@ -143,7 +153,7 @@ With the field validFor in response, you can calculate the time after with your 
 }
 ```
 
-Use this API endpoint to add a new product in the products collection. When a product is added in the products collection, this product is also added in product group collection. If the product group with the matching group ID is missing, a new product group is formed. Search index is also automatically updated with a valid call to this endpoint. 
+Use this API endpoint to add a new product in the products collection. When a product is added in the products collection, this product is also added in product group collection. If the product group with the matching groupID is missing, a new product group is formed. Search index and the cache are also automatically updated with a valid call to this endpoint. 
 
 
 ### HTTP Request
@@ -167,7 +177,7 @@ description     |   Text, Max 2048 Characters  |  The description of the product
 groupID         |   String, Max 50 Characters  |  The product group ID
 regularPrice    |   Float, Greater than 0      |  Everyday price
 promotionPrice  |   Float, Greater than 0      |  On-sale price
-images          |   URL, Mandatory             |  Product images (recommended multiple)
+images          |   URL, Mandatory             |  Product images
 searchKeywords  |   Text, Mandatory            |  Keywords that you want this product to be searched with
 quantity        |   Integer, Greater than 0    |  Inventory stock quantity
 category        |   Text, Mandatory            |  Category breadcrumbs
@@ -255,14 +265,14 @@ SKU       | The product SKU
 
     Key         |          Description
 ----------------| ------------------------------
-_id             |   Internal field, object identifier
+_id             |   Internal field, database object identifier
 sku             |   The SKU of the product
 name            |   The name of the product
 description     |   The description of the product
 groupID         |   The product group ID
 regularPrice    |   Everyday price
 promotionPrice  |   On-sale price
-images          |   Product images (recommended multiple)
+images          |   Product images 
 searchKeywords  |   Keywords that you want this product to be searched with
 quantity        |   Inventory stock quantity
 category        |   Category breadcrumbs
@@ -311,7 +321,7 @@ isMain          |   Is the product main product in the group?
 }
 ```
 
-Use this API endpoint to update your product information in the catalog. For now you need to pass the entire product object with updated parts (will be improved very soon). When you hit this endpoint the data in the database gets updated, product group data also gets updated automatically, search index is also updated and the cache entry is removed first and updated on the next GET call. 
+Use this API endpoint to update your product information in the catalog. For now you need to pass the entire product object with updated parts (this functionality will be improved very soon). When you hit this endpoint, the data in the products collection gets updated, product group data also gets updated automatically, search index is also updated and the cache entry is removed first and updated on the next GET call. 
 
 
 ### HTTP Request
@@ -336,7 +346,7 @@ description     |   Text, Max 2048 Characters  |  The description of the product
 groupID         |   String, Max 50 Characters  |  The product group ID
 regularPrice    |   Float, Greater than 0      |  Everyday price
 promotionPrice  |   Float, Greater than 0      |  On-sale price
-images          |   URL, Mandatory             |  Product images (recommended multiple)
+images          |   URL, Mandatory             |  Product images
 searchKeywords  |   Text, Mandatory            |  Keywords that you want this product to be searched with
 quantity        |   Integer, Greater than 0    |  Inventory stock quantity
 category        |   Text, Mandatory            |  Category breadcrumbs
@@ -383,7 +393,7 @@ message            |  Additional message for more information on the API respons
 }
 ```
 
-Use this API endpoint to remove a product from the catalog. When you hit this endpoint with a valid request, the product in the product collection gets removed, the product collection is automatically updated and the cache and search index is also updated.  
+Use this API endpoint to remove a product from the catalog. When you hit this endpoint with a valid request, the product in the products collection gets removed, the productgroups collection is also automatically updated and the cache and search index is also updated. If there was only one product in the product group the product group object is also removed from the productgroups collection. 
  
 
 ### HTTP Request
@@ -403,10 +413,6 @@ Parameter |             Description
 SKU       | the SKU of the product to be deleted
 
 
-
-
-
-# Product Groups
 
 ## Get a product group
 
@@ -573,7 +579,7 @@ products              |  List of all the product objects for reference
 }
 ```
 
-Use this API endpoint to remove a product group from the product group collection in the database. This call also updates the search index. When a product group is deleted, entries of related products in the products collection are also removed. 
+Use this API endpoint to remove a product group from the productgroups collection in the database. This call also updates the search index. When a product group is deleted, entries of related products in the products collection are also removed. 
  
 
 ### HTTP Request
@@ -600,7 +606,7 @@ PGID      | the group ID of the product group to be deleted
 
 
 
-# Search
+# Search API
 
 ## Basic search
 
@@ -717,7 +723,7 @@ Use this API endpoint to search a product group in the search index. Please note
 
 ### HTTP Request
 
-`GET http://api.gallao.io/search/v1/search`
+`GET http://api.gallao.io/search/{API version}/search`
 
 ### Header
 
