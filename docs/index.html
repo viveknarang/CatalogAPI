@@ -227,7 +227,7 @@
               </ul>
           </li>
           <li>
-            <a href="#products" class="toc-h1 toc-link" data-title="Products">Products</a>
+            <a href="#catalog-api" class="toc-h1 toc-link" data-title="Catalog API">Catalog API</a>
               <ul class="toc-list-h2">
                   <li>
                     <a href="#add-a-new-product" class="toc-h2 toc-link" data-title="Add a new product">Add a new product</a>
@@ -241,11 +241,6 @@
                   <li>
                     <a href="#delete-a-product" class="toc-h2 toc-link" data-title="Delete a product">Delete a product</a>
                   </li>
-              </ul>
-          </li>
-          <li>
-            <a href="#product-groups" class="toc-h1 toc-link" data-title="Product Groups">Product Groups</a>
-              <ul class="toc-list-h2">
                   <li>
                     <a href="#get-a-product-group" class="toc-h2 toc-link" data-title="Get a product group">Get a product group</a>
                   </li>
@@ -255,7 +250,7 @@
               </ul>
           </li>
           <li>
-            <a href="#search" class="toc-h1 toc-link" data-title="Search">Search</a>
+            <a href="#search-api" class="toc-h1 toc-link" data-title="Search API">Search API</a>
               <ul class="toc-list-h2">
                   <li>
                     <a href="#basic-search" class="toc-h2 toc-link" data-title="Basic search">Basic search</a>
@@ -264,7 +259,7 @@
           </li>
       </ul>
         <ul class="toc-footer">
-            <li><a href='gallao.io'>Gallao E-commerce API</a></li>
+            <li><span>API documentation version 1.1</span></li>
             <li><a href='mailto:vivek.narang10@gmail.com'>Contact Us</a></li>
         </ul>
     </div>
@@ -274,24 +269,34 @@
         <h1 id='introduction'>Introduction</h1>
 <p>This API provides you with several options to maintain your product catalog and search products in your catalog. </p>
 
-<p>With this API you can create, update and delete products in your product catalog. The API automatically manages the product groups for you. The product group is identified by the groupID field (i.e. all the products with the same groupID are combined in a single product group). While the API allows you to get and delete product groups by group ID, the API does not allow you to directly modify the product groups. The only way to modify product groups is to use API options for products. With this approach the API tries to ensure that the data is not corrupted. When you delete a product group, all the products in the group are automatically deleted. </p>
+<p>With this API, you can create, update and delete products in your product catalog. The API automatically manages the product groups for you. The product group is identified by the groupID field (i.e. all the products with the same groupID are combined in a single product group). While the API allows you to get and delete product groups by groupID, the API does not allow you to directly modify the product groups. The only way to modify product groups is to use API endpoints for individual products. With this approach, the API tries to ensure that the data is not corrupted. When you delete a product group, all the products in the group are also automatically deleted. </p>
 
-<p>The search API is fairly powerful. It allows features like search on a specific field or a set of fields. The search API responds with product groups where the query matches certain fields. Search API also allows you to select if you want the standard facets (work on advanced features in progress) to be included in the API response. In addtion to the features mentioned above, the API syncs the search index with changes in products/product groups, <strong>in real-time</strong>. Also, for efficiency and speed, the search and GET product/productgroup responses are cached. Upon any updates the cache is updated as well, as needed. </p>
+<aside class="notice">
+Is is important to understand the concept of product groups. For search quality and other advanced features provided by our platform, products are grouped to form product groups. These product groups are essentially a product with different variations. Example: A shirt can be of multiple sizes and/or colors. So all of the variations of this shirt are grouped to form a product group.  
+</aside>
+
+<p>The search API is fairly powerful too. It allows features like search on a specific field or a set of fields. The search API responds with product groups where the query matches certain fields. Search API also allows you to select the standard facets to be included in the API response. In addtion to the features mentioned above, the API automatically syncs the search index with changes in products/product groups, <strong>in real-time</strong>. Also, for efficiency and speed, the search and GET product/productgroup endpoints are cached. Upon any updates, the cache is updated as well. </p>
 
 <p>We are continuously adding new features and improving this API, if you have any suggestions please reach out to us <a href="mailto:vivek.narang10@gmail.com">here</a></p>
 
-<p>API Powered by:</p>
+<p>API Powered by</p>
 
 <ul>
-<li>NodeJS</li>
-<li>Redis</li>
-<li>Elastic Search</li>
-<li>MongoDB</li>
+<li>Node.js<br></li>
+<li>Redis<br></li>
+<li>Elasticsearch<br></li>
+<li>MongoDB<br></li>
+</ul>
+
+<p>Team</p>
+
+<ul>
+<li>Vivek Narang</li>
+<li>Siddhartha Gupta</li>
 </ul>
 
 <aside class="success">
-The current API version is: v1 
-Please replace {API version} with v1 in your API calls
+The current API version is: v1 Please replace {API version} with v1 in your API calls
 </aside>
 <h1 id='api-login'>API login</h1><h2 id='get-api-access-token'>Get API access token</h2>
 <blockquote>
@@ -323,7 +328,7 @@ Please replace {API version} with v1 in your API calls
     </span><span class="s2">"message"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Invalid credentials or login attempt with valid credentials by an inactive customer!"</span><span class="w">
 </span><span class="p">}</span><span class="w">
 </span></code></pre>
-<p>This endpoint gets your your API access token. You need to send your customer ID and the API key that we provided you for using our SaaS platform. Upon receiving your valid credentials, the API will respond with a token with additional information including the validFor key which tells you how long this access token is valid for. please set <strong>x-access-token</strong> to the value of the <strong>token</strong> key, in the header of your subsequent API calls. </p>
+<p>This endpoint gets you your API access token. You need to send your customer ID and the API key that we provided you for using our platform. Upon receiving your valid credentials, the API will respond with a token with additional information including the validFor key which tells you how long this access token is valid for. Please set <strong>x-access-token</strong> to the value of the <strong>token</strong>, in the header of your subsequent API calls. </p>
 <h3 id='http-request'>HTTP Request</h3>
 <p><code>GET http://api.gallao.io/admin/{API version}/customers/login</code></p>
 <h3 id='url-parameters'>URL Parameters</h3>
@@ -339,12 +344,12 @@ Please replace {API version} with v1 in your API calls
 </tr>
 <tr>
 <td>apiKey</td>
-<td>The apiKey that is sent by us</td>
+<td>The API key that is sent by us</td>
 </tr>
 </tbody></table>
 
 <aside class="warning">
-You do not need to invoke login too often. Please include the token that you receive upon a successful login, in your subsequent API calls until the token expires.
+You do not need to invoke login too often. Please include the token that you receive upon a successful login in your subsequent API calls, until the token expires.
 </aside>
 <h3 id='response'>Response</h3>
 <table><thead>
@@ -378,7 +383,7 @@ You do not need to invoke login too often. Please include the token that you rec
 <aside class="notice">
 With the field validFor in response, you can calculate the time after with your servers need to login again to get a new token.
 </aside>
-<h1 id='products'>Products</h1><h2 id='add-a-new-product'>Add a new product</h2>
+<h1 id='catalog-api'>Catalog API</h1><h2 id='add-a-new-product'>Add a new product</h2>
 <blockquote>
 <p>Sample valid API response:</p>
 </blockquote>
@@ -410,7 +415,7 @@ With the field validFor in response, you can calculate the time after with your 
     </span><span class="p">}</span><span class="w">
 </span><span class="p">}</span><span class="w">
 </span></code></pre>
-<p>Use this API endpoint to add a new product in the products collection. When a product is added in the products collection, this product is also added in product group collection. If the product group with the matching group ID is missing, a new product group is formed. Search index is also automatically updated with a valid call to this endpoint. </p>
+<p>Use this API endpoint to add a new product in the products collection. When a product is added in the products collection, this product is also added in product group collection. If the product group with the matching groupID is missing, a new product group is formed. Search index and the cache are also automatically updated with a valid call to this endpoint. </p>
 <h3 id='http-request-2'>HTTP Request</h3>
 <p><code>POST http://api.gallao.io/catalog/{API version}/products</code></p>
 <h3 id='header'>Header</h3>
@@ -470,7 +475,7 @@ With the field validFor in response, you can calculate the time after with your 
 <tr>
 <td>images</td>
 <td>URL, Mandatory</td>
-<td>Product images (recommended multiple)</td>
+<td>Product images</td>
 </tr>
 <tr>
 <td>searchKeywords</td>
@@ -607,7 +612,7 @@ With the field validFor in response, you can calculate the time after with your 
 </thead><tbody>
 <tr>
 <td>_id</td>
-<td>Internal field, object identifier</td>
+<td>Internal field, database object identifier</td>
 </tr>
 <tr>
 <td>sku</td>
@@ -635,7 +640,7 @@ With the field validFor in response, you can calculate the time after with your 
 </tr>
 <tr>
 <td>images</td>
-<td>Product images (recommended multiple)</td>
+<td>Product images</td>
 </tr>
 <tr>
 <td>searchKeywords</td>
@@ -703,7 +708,7 @@ With the field validFor in response, you can calculate the time after with your 
     </span><span class="p">}</span><span class="w">
 </span><span class="p">}</span><span class="w">
 </span></code></pre>
-<p>Use this API endpoint to update your product information in the catalog. For now you need to pass the entire product object with updated parts (will be improved very soon). When you hit this endpoint the data in the database gets updated, product group data also gets updated automatically, search index is also updated and the cache entry is removed first and updated on the next GET call. </p>
+<p>Use this API endpoint to update your product information in the catalog. For now you need to pass the entire product object with updated parts (this functionality will be improved very soon). When you hit this endpoint, the data in the products collection gets updated, product group data also gets updated automatically, search index is also updated and the cache entry is removed first and updated on the next GET call. </p>
 <h3 id='http-request-4'>HTTP Request</h3>
 <p><code>PUT http://api.gallao.io/catalog/{API version}/products</code></p>
 <h3 id='header-3'>Header</h3>
@@ -763,7 +768,7 @@ With the field validFor in response, you can calculate the time after with your 
 <tr>
 <td>images</td>
 <td>URL, Mandatory</td>
-<td>Product images (recommended multiple)</td>
+<td>Product images</td>
 </tr>
 <tr>
 <td>searchKeywords</td>
@@ -849,7 +854,7 @@ With the field validFor in response, you can calculate the time after with your 
     </span><span class="s2">"message"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Product with SKU 9398473 does not exist ..."</span><span class="w">
 </span><span class="p">}</span><span class="w">
 </span></code></pre>
-<p>Use this API endpoint to remove a product from the catalog. When you hit this endpoint with a valid request, the product in the product collection gets removed, the product collection is automatically updated and the cache and search index is also updated.  </p>
+<p>Use this API endpoint to remove a product from the catalog. When you hit this endpoint with a valid request, the product in the products collection gets removed, the productgroups collection is also automatically updated and the cache and search index is also updated. If there was only one product in the product group the product group object is also removed from the productgroups collection. </p>
 <h3 id='http-request-5'>HTTP Request</h3>
 <p><code>DELETE http://api.gallao.io/catalog/{API version}/products/{SKU}</code></p>
 <h3 id='header-4'>Header</h3>
@@ -876,7 +881,7 @@ With the field validFor in response, you can calculate the time after with your 
 <td>the SKU of the product to be deleted</td>
 </tr>
 </tbody></table>
-<h1 id='product-groups'>Product Groups</h1><h2 id='get-a-product-group'>Get a product group</h2>
+<h2 id='get-a-product-group'>Get a product group</h2>
 <blockquote>
 <p>Sample valid API response:</p>
 </blockquote>
@@ -1087,7 +1092,7 @@ With the field validFor in response, you can calculate the time after with your 
     </span><span class="s2">"message"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Product Group with ID 9398473 does not exist ..."</span><span class="w">
 </span><span class="p">}</span><span class="w">
 </span></code></pre>
-<p>Use this API endpoint to remove a product group from the product group collection in the database. This call also updates the search index. When a product group is deleted, entries of related products in the products collection are also removed. </p>
+<p>Use this API endpoint to remove a product group from the productgroups collection in the database. This call also updates the search index. When a product group is deleted, entries of related products in the products collection are also removed. </p>
 <h3 id='http-request-7'>HTTP Request</h3>
 <p><code>DELETE http://api.gallao.io/catalog/{API version}/productgroups/{PGID}</code></p>
 <h3 id='header-6'>Header</h3>
@@ -1114,7 +1119,7 @@ With the field validFor in response, you can calculate the time after with your 
 <td>the group ID of the product group to be deleted</td>
 </tr>
 </tbody></table>
-<h1 id='search'>Search</h1><h2 id='basic-search'>Basic search</h2>
+<h1 id='search-api'>Search API</h1><h2 id='basic-search'>Basic search</h2>
 <blockquote>
 <p>Sample valid API response:</p>
 </blockquote>
@@ -1224,7 +1229,7 @@ With the field validFor in response, you can calculate the time after with your 
 </span></code></pre>
 <p>Use this API endpoint to search a product group in the search index. Please note that product group objects are only returned in the response. </p>
 <h3 id='http-request-8'>HTTP Request</h3>
-<p><code>GET http://api.gallao.io/search/v1/search</code></p>
+<p><code>GET http://api.gallao.io/search/{API version}/search</code></p>
 <h3 id='header-7'>Header</h3>
 <table><thead>
 <tr>
