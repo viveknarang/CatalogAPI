@@ -3,11 +3,8 @@ var mongo = require('mongodb');
 var PropertiesReader = require('properties-reader');
 var properties = PropertiesReader('CatalogAPI.properties');
 
-// getting mongodb credentials ...
 let baseURL = properties.get('mongodb.url');
 let port = properties.get('mongodb.port');
-
-let databaseName = properties.get('mongodb.database');
 
 var MongoClient = mongo.MongoClient;
 

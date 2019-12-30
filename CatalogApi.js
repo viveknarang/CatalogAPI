@@ -282,6 +282,7 @@ function createProductGroup(sdbClient, scollection, product, esClient, res, resp
     subProduct.brand = product["brand"];
     subProduct.size = product["size"];
     subProduct.isMain = product["isMain"];
+    subProduct.currency = product["currency"];
 
     productMap.set(product["sku"], subProduct);
 
@@ -302,6 +303,8 @@ function createProductGroup(sdbClient, scollection, product, esClient, res, resp
         searchKeywords: product["searchKeywords"],
         category: product["category"],
         images: product["images"],
+        currency : product["currency"],
+        updated : Date.now(),
         products: productMap,
 
     });
@@ -357,6 +360,7 @@ function updateProductGroup(sdbClient, scollection, pgid, uProduct, esClient, re
             subProduct.size = uProduct["size"];
             subProduct.searchKeywords = uProduct["searchKeywords"];
             subProduct.isMain = uProduct["isMain"];
+            subProduct.currency = uProduct["currency"];
 
             pg["products"].set(uProduct["sku"], subProduct);
 
@@ -421,6 +425,8 @@ function updateProductGroup(sdbClient, scollection, pgid, uProduct, esClient, re
             pg["sizes"] = [...new Set(nsizes)];
             pg["searchKeywords"] = [...new Set(nSearchKeywords)];
             pg["category"] = [...new Set(ncategory)];
+            pg["currency"] = uProduct["currency"];
+            pg["updated"] = Date.now();
 
             let uQuery = null;
 
@@ -445,7 +451,9 @@ function updateProductGroup(sdbClient, scollection, pgid, uProduct, esClient, re
                         "sizes": pg["sizes"],
                         "searchKeywords": pg["searchKeywords"],
                         "category": pg["category"],
-                        "images": pg["images"]
+                        "images": pg["images"],
+                        "currency": pg["currency"],
+                        "updated" : pg["updated"]
 
                     }
                 };
@@ -454,6 +462,7 @@ function updateProductGroup(sdbClient, scollection, pgid, uProduct, esClient, re
 
                 uQuery = {
                     $set: {
+
                         "products": pg["products"],
                         "name": pg["name"],
                         "description": pg["description"],
@@ -467,7 +476,10 @@ function updateProductGroup(sdbClient, scollection, pgid, uProduct, esClient, re
                         "brands": pg["brands"],
                         "sizes": pg["sizes"],
                         "searchKeywords": pg["searchKeywords"],
-                        "category": pg["category"]
+                        "category": pg["category"],
+                        "currency": pg["currency"],
+                        "updated" : pg["updated"]
+
                     }
                 };
 
@@ -598,9 +610,11 @@ function deleteProductInProductGroup(esClient, dbClient, pgcollection, pgid, sku
         pg["sizes"] = [...new Set(nsizes)];
         pg["searchKeywords"] = [...new Set(nSearchKeywords)];
         pg["category"] = [...new Set(ncategory)];
+        pg["updated"] = Date.now();
 
         let setQuery = {
             $set: {
+
                 "products": products,
                 "productSKUs": pg["productSKUs"],
                 "active": pg["active"],
@@ -612,7 +626,8 @@ function deleteProductInProductGroup(esClient, dbClient, pgcollection, pgid, sku
                 "brands": pg["brands"],
                 "sizes": pg["sizes"],
                 "searchKeywords": pg["searchKeywords"],
-                "category": pg["category"]
+                "category": pg["category"],
+                "updated" : pg["updated"]
 
             }
         };
@@ -931,7 +946,9 @@ var main = function (rc, esc) {
             check('active').exists().withMessage("active flag is a mandatory field ..."),
             check('active').isBoolean().withMessage("active flag should only have either true or false as a value ..."),
             check('isMain').exists().withMessage("isMain flag is a mandatory field ..."),
-            check('isMain').isBoolean().withMessage("isMain flag should only have either true or false as a value ...")
+            check('isMain').isBoolean().withMessage("isMain flag should only have either true or false as a value ..."),
+            check('currency').isIn(['USD', 'CAD', 'EUR', 'INR']).withMessage("Currency can only be among USD, CAD, EUR or INR")
+
         ],
 
         authenticate,
@@ -941,6 +958,8 @@ var main = function (rc, esc) {
         (req, res) => {
 
             const product = new Product(req.body);
+
+            product.updated = Date.now();
 
             redisClient.get(req.headers['x-access-token'], function (error, customer_domain) {
 
@@ -1080,7 +1099,8 @@ var main = function (rc, esc) {
             check('active').exists().withMessage("active flag is a mandatory field ..."),
             check('active').isBoolean().withMessage("active flag should only have either true or false as a value ..."),
             check('isMain').exists().withMessage("isMain flag is a mandatory field ..."),
-            check('isMain').isBoolean().withMessage("isMain flag should only have either true or false as a value ...")
+            check('isMain').isBoolean().withMessage("isMain flag should only have either true or false as a value ..."),
+            check('currency').isIn(['USD', 'CAD', 'EUR', 'INR']).withMessage("Currency can only be among USD, CAD, EUR or INR")
 
         ],
 

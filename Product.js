@@ -53,6 +53,14 @@ const Product = new Schema({
         type: Boolean,
         default: 'true'
     },
+    currency: {
+        type: String,
+        default: 'USD'
+    },
+    updated: { 
+        type : Date, 
+        default: Date.now 
+    },
 
     _id: false
 
