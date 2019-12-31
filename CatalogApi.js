@@ -494,7 +494,32 @@ function updateProductGroup(sdbClient, scollection, pgid, uProduct, esClient, re
                     throw err;
                 }
 
-                indexDocumentinES(esClient, scollection, pg, res, response);
+                if (result['result']['n'] == 1 && result['result']['nModified'] == 0) {
+
+                    response = new Object();
+                    response[apiResponseKeySuccess] = false;
+                    response[apiResponseKeyCode] = apiResponseCodeInvalid;
+                    response[apiResponseKeyMessage] = "Nothing to update for product group ID " + pgid;
+                    res.json(response);
+                    res.end();
+                    return;
+
+                } if (result['result']['n'] == 0 && result['result']['nModified'] == 0) {
+
+                    response = new Object();
+                    response[apiResponseKeySuccess] = false;
+                    response[apiResponseKeyCode] = apiResponseCodeInvalid;
+                    response[apiResponseKeyMessage] = "Product group ID " + pgid + " does not exist";
+                    res.json(response);
+                    res.end();
+                    return;
+
+                } if (result['result']['n'] == 1 && result['result']['nModified'] == 1) {
+
+                    indexDocumentinES(esClient, scollection, pg, res, response);
+
+                }
+
 
             });
 
@@ -641,7 +666,32 @@ function deleteProductInProductGroup(esClient, dbClient, pgcollection, pgid, sku
                 throw err;
             }
 
-            indexDocumentinES(esClient, pgcollection, pg, res, response);
+
+            if (result['result']['n'] == 1 && result['result']['nModified'] == 0) {
+
+                response = new Object();
+                response[apiResponseKeySuccess] = false;
+                response[apiResponseKeyCode] = apiResponseCodeInvalid;
+                response[apiResponseKeyMessage] = "Nothing to update for product group ID " + pgid;
+                res.json(response);
+                res.end();
+                return;
+
+            } if (result['result']['n'] == 0 && result['result']['nModified'] == 0) {
+
+                response = new Object();
+                response[apiResponseKeySuccess] = false;
+                response[apiResponseKeyCode] = apiResponseCodeInvalid;
+                response[apiResponseKeyMessage] = "Product group ID " + pgid + " does not exist";
+                res.json(response);
+                res.end();
+                return;
+
+            } if (result['result']['n'] == 1 && result['result']['nModified'] == 1) {
+
+                indexDocumentinES(esClient, pgcollection, pg, res, response);
+
+            }
 
 
         });
@@ -1180,36 +1230,58 @@ var main = function (rc, esc) {
                                 throw err;
                             }
 
-                            redisClient.del(req.url + req.body.sku);
-                            redisClient.set(req.url + req.body.sku, JSON.stringify(product));
-                            redisClient.del('/catalog/' + apiVersion + '/productgroups/' + product["groupID"]);
+                            if (result['result']['n'] == 1 && result['result']['nModified'] == 0) {
 
-                            let gQuery = { "groupID": product["groupID"] };
+                                response = new Object();
+                                response[apiResponseKeySuccess] = false;
+                                response[apiResponseKeyCode] = apiResponseCodeInvalid;
+                                response[apiResponseKeyMessage] = "Nothing to update for product SKU " + req.body.sku;
+                                res.json(response);
+                                res.end();
+                                return;
+            
+                            } if (result['result']['n'] == 0 && result['result']['nModified'] == 0) {
+            
+                                response = new Object();
+                                response[apiResponseKeySuccess] = false;
+                                response[apiResponseKeyCode] = apiResponseCodeInvalid;
+                                response[apiResponseKeyMessage] = "Product SKU " + req.body.sku + " does not exist";
+                                res.json(response);
+                                res.end();
+                                return;
+            
+                            } if (result['result']['n'] == 1 && result['result']['nModified'] == 1) {
+            
+                                redisClient.del(req.url + req.body.sku);
+                                redisClient.set(req.url + req.body.sku, JSON.stringify(product));
+                                redisClient.del('/catalog/' + apiVersion + '/productgroups/' + product["groupID"]);
+    
+                                let gQuery = { "groupID": product["groupID"] };
+    
+                                dbClient.db(externalDB).collection(pgcollection).find(gQuery).toArray(function (err, result) {
+    
+                                    if (err) {
+                                        apiResponseError(res);
+                                        throw err;
+                                    }
+    
+                                    response[apiResponseKeySuccess] = true;
+                                    response[apiResponseKeyCode] = apiResponseCodeOk;
+                                    response[apiResponseKeyMessage] = "Product Updated ...";
+                                    response[apiResponseKeyResponse] = product;
+    
+                                    if (result.length == 1) {
+                                        updateProductGroup(dbClient, pgcollection, product["groupID"], product, esClient, res, response);
+                                    } else {
+                                        res.end();
+                                    }
+    
+                                });
 
-                            dbClient.db(externalDB).collection(pgcollection).find(gQuery).toArray(function (err, result) {
-
-                                if (err) {
-                                    apiResponseError(res);
-                                    throw err;
-                                }
-
-                                response[apiResponseKeySuccess] = true;
-                                response[apiResponseKeyCode] = apiResponseCodeOk;
-                                response[apiResponseKeyMessage] = "Product Updated";
-                                response[apiResponseKeyResponse] = product;
-
-                                if (result.length == 1) {
-                                    updateProductGroup(dbClient, pgcollection, product["groupID"], product, esClient, res, response);
-                                } else {
-                                    res.end();
-                                }
-
-                            });
-
+                            }
 
 
                         });
-
 
 
                     }
