@@ -7,6 +7,7 @@ var mongoUtil = require('./Database');
 var compression = require('compression');
 const { check, validationResult } = require('express-validator/check')
 const Product = require('./Product');
+const Order = require('./Order');
 const ProductGroup = require('./ProductGroup');
 var bodyParser = require('body-parser');
 var path = require("path");
@@ -17,6 +18,7 @@ let homepage = properties.get('docs.api.homepage');
 let customerCollection = properties.get('mongodb.collection.customers');
 let productsCollection = properties.get('mongodb.collection.products');
 let productGroupsCollection = properties.get('mongodb.collection.productgroups');
+let ordersCollection = properties.get('mongodb.collection.orders');
 let internalDB = properties.get('mongodb.internal.db');
 let externalDB = properties.get('mongodb.external.db');
 let jwtKey = properties.get('jwt.privateKey');
@@ -1453,6 +1455,164 @@ var main = function (rc, esc) {
 
             
         });
+
+
+
+
+    app.post('/order/' + apiVersion + '/orders',
+
+    [
+        check('shippingAddress.firstName').exists().withMessage("shippingAddress.firstName should be present ..."),
+        check('shippingAddress.lastName').exists().withMessage("shippingAddress.lastName should be present ..."),
+        check('shippingAddress.email').exists().isEmail().withMessage("shippingAddress.email should be present ..."),
+        check('shippingAddress.phoneNumber').exists().withMessage("shippingAddress.phoneNumber should be present ..."),
+        check('shippingAddress.phoneNumber').isNumeric().withMessage("shippingAddress.phoneNumber should only have digits ..."),
+        check('shippingAddress.addressLineOne').exists().withMessage("shippingAddress.addressLineOne should be present ..."),
+        check('shippingAddress.city').exists().withMessage("shippingAddress.city should be present ..."),
+        check('shippingAddress.state').exists().withMessage("shippingAddress.state should be present ..."),
+        check('shippingAddress.country').exists().withMessage("shippingAddress.country should be present ..."),
+        check('shippingAddress.pincode').exists().withMessage("shippingAddress.pincode should be present ..."),
+
+        check('shippingAddress.firstName').isLength({ max: 50 }).withMessage("shippingAddress.firstName Value cannot be more than 50 characters ..."),
+        check('shippingAddress.lastName').isLength({ max: 50 }).withMessage("shippingAddress.lastName Value cannot be more than 50 characters ..."),
+        check('shippingAddress.addressLineOne').isLength({ max: 50 }).withMessage("'shippingAddress.addressLineOne Value cannot be more than 50 characters ..."),
+        check('shippingAddress.addressLineTwo').isLength({ max: 50 }).withMessage("shippingAddress.addressLineTwo Value cannot be more than 50 characters ..."),
+        check('shippingAddress.city').isLength({ max: 50 }).withMessage("shippingAddress.city Value cannot be more than 50 characters ..."),
+        check('shippingAddress.state').isLength({ max: 50 }).withMessage("shippingAddress.state Value cannot be more than 50 characters ..."),
+        check('shippingAddress.country').isLength({ max: 50 }).withMessage("shippingAddress.country Value cannot be more than 50 characters ..."),
+        check('shippingAddress.pincode').isLength({ max: 50 }).withMessage("shippingAddress.pincode Value cannot be more than 50 characters ..."),
+        check('shippingAddress.phoneNumber').isLength({ max: 12 }).withMessage("shippingAddress.phoneNumber Value cannot be more than 12 characters ..."),
+
+        check('orderID').exists().withMessage("orderID should be present ..."),
+        check('orderID').isAlphanumeric().withMessage("orderID can only be made of alphanumeric characters (A-Z,a-z,0-9)..."),
+        check('orderID').isLength({ max: 50 }).withMessage("orderID Value cannot be more than 50 characters ..."),
+
+        check('customerID').exists().withMessage("customerID should be present ..."),
+        check('customerID').isAlphanumeric().withMessage("customerID can only be made of alphanumeric characters (A-Z,a-z,0-9)..."),
+        check('customerID').isLength({ max: 50 }).withMessage("customerID Value cannot be more than 50 characters ..."),
+
+        check('orderDate').exists().withMessage("orderDate should be present ..."),
+        check('orderDate').isLength({ max: 50 }).withMessage("orderDate Value cannot be more than 50 characters ..."),
+        
+        check('totalAmount').isDecimal().withMessage("Total amount should have decimals ..."),
+        check('currency').isIn(['USD', 'CAD', 'EUR', 'INR']).withMessage("Currency can only be among USD, CAD, EUR or INR"),
+        check('isGift').isBoolean().withMessage("isGift flag should only have either true or false as a value ..."),
+        check('status').isIn(['ORDERED']).withMessage("Initial status of the order created can only be `ORDERED`")
+
+    ],
+
+    authenticate,
+
+    validateInput,
+
+    (req, res) => {
+
+        const order = new Order(req.body);
+
+        order["orderDate"] = Date.now;
+        
+        response = new Object();
+
+        if (order.shippingAddress.size > 10) {
+            response[apiResponseKeySuccess] = false;
+            response[apiResponseKeyCode] = apiResponseCodeInvalid;
+            response[apiResponseKeyResponse] = "Shipping address seems to have unwanted data ...";
+            res.json(response);
+            res.end();  
+            return;         
+        }
+
+        if (order.productQuantity.size < 1 || order.productPrice.size < 1) {
+            response[apiResponseKeySuccess] = false;
+            response[apiResponseKeyCode] = apiResponseCodeInvalid;
+            response[apiResponseKeyResponse] = "product quantity/price map cannot be empty. Please ensure to pass atleast one valid entry for both ...";
+            res.json(response);
+            res.end();  
+            return;         
+        }
+
+
+        for (let pqk of order.productQuantity.keys()) {
+
+            if (pqk.length > 50) {
+                response[apiResponseKeySuccess] = false;
+                response[apiResponseKeyCode] = apiResponseCodeInvalid;
+                response[apiResponseKeyResponse] = "product quantity map keys seems too large to be legitimate. Please check! ...";
+                res.json(response);
+                res.end();  
+                return;         
+            }
+
+        }
+        
+        for (let pqv of order.productQuantity.values()) {
+
+            if (pqv.length > 10) {
+                response[apiResponseKeySuccess] = false;
+                response[apiResponseKeyCode] = apiResponseCodeInvalid;
+                response[apiResponseKeyResponse] = "product quantity map values seems too large to be legitimate. Please check! ...";
+                res.json(response);
+                res.end();  
+                return;         
+            }
+
+        }
+
+        for (let ppk of order.productPrice.keys()) {
+
+            if (ppk.length > 50) {
+                response[apiResponseKeySuccess] = false;
+                response[apiResponseKeyCode] = apiResponseCodeInvalid;
+                response[apiResponseKeyResponse] = "product price maps keys seems too large to be legitimate. Please check! ...";
+                res.json(response);
+                res.end();  
+                return;         
+            }
+
+        }
+        
+        for (let ppv of order.productPrice.values()) {
+
+            if (ppv.length > 10) {
+                response[apiResponseKeySuccess] = false;
+                response[apiResponseKeyCode] = apiResponseCodeInvalid;
+                response[apiResponseKeyResponse] = "product price map values seems too large to be legitimate. Please check! ...";
+                res.json(response);
+                res.end();  
+                return;         
+            }
+
+        }
+
+        redisClient.get(req.headers['x-access-token'], function (error, customer_domain) {
+
+            let ocollection = customer_domain + "." + ordersCollection;
+
+                res.setHeader('Content-Type', 'application/json');
+
+                    dbClient.db(externalDB).collection(ocollection).insertOne(order, function (err, result) {
+
+                        if (err) {
+                            apiResponseError(res);
+                            throw err;
+                        }
+
+                            response[apiResponseKeySuccess] = true;
+                            response[apiResponseKeyCode] = apiResponseCodeOk;
+                            response[apiResponseKeyMessage] = "Order ( Order ID: " + order.orderID + " ) for customer "+ order.customerID + " is created ...";
+                            response[apiResponseKeyResponse] = order;
+                            res.json(response);
+                            res.end();
+
+                    });
+
+
+        });
+
+    });
+
+
+
 
     app.listen(apiPort, () => { console.log(appName + ` is now listening port ${apiPort} ...`); });
 
