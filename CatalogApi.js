@@ -1614,6 +1614,114 @@ var main = function (rc, esc) {
 
 
 
+    app.get('/order/' + apiVersion + '/orders/customers/:CID',
+
+    [
+        check('CID').exists().withMessage("Customer ID should be present ..."),
+        check('CID').isLength({ max: 50 }).withMessage("Customer ID cannot be more than 50 characters ..."),
+    ],
+
+    authenticate,
+
+    validateInput,
+
+    (req, res) => {
+
+        let cid = req.params.CID;
+
+        res.setHeader('Content-Type', 'application/json');
+
+                redisClient.get(req.headers['x-access-token'], function (error, customer_domain) {
+
+                    var query = { "customerID" : cid };
+                    let ocollection = customer_domain + "." + ordersCollection;
+
+                    dbClient.db(externalDB).collection(ocollection).find(query).toArray(function (err, result) {
+
+                        if (err) {
+                            apiResponseError(res);
+                            throw err;
+                        }
+
+                        if (result.length >= 1) {
+                            response = new Object();
+                            response[apiResponseKeySuccess] = true;
+                            response[apiResponseKeyCode] = apiResponseCodeOk;
+                            response[apiResponseKeyResponse] = result;
+                        } else {
+                            response = new Object();
+                            response[apiResponseKeySuccess] = false;
+                            response[apiResponseKeyCode] = apiResponseCodeInvalid;
+                            response[apiResponseKeyMessage] = "No order(s) found for customer ID " + cid;
+                        }
+
+                        res.json(response);
+                        res.end();
+
+                    });
+
+
+                });
+
+
+
+    });
+
+
+    app.get('/order/' + apiVersion + '/orders/:ID',
+
+    [
+        check('ID').exists().withMessage("ID should be present ..."),
+        check('ID').isLength({ max: 50 }).withMessage("ID cannot be more than 50 characters ..."),
+    ],
+
+    authenticate,
+
+    validateInput,
+
+    (req, res) => {
+
+        let id = req.params.ID;
+
+        res.setHeader('Content-Type', 'application/json');
+
+                redisClient.get(req.headers['x-access-token'], function (error, customer_domain) {
+
+                    var query = { "orderID" : id };
+                    let ocollection = customer_domain + "." + ordersCollection;
+
+                    dbClient.db(externalDB).collection(ocollection).find(query).toArray(function (err, result) {
+
+                        if (err) {
+                            apiResponseError(res);
+                            throw err;
+                        }
+
+                        if (result.length >= 1) {
+                            response = new Object();
+                            response[apiResponseKeySuccess] = true;
+                            response[apiResponseKeyCode] = apiResponseCodeOk;
+                            response[apiResponseKeyResponse] = result;
+                        } else {
+                            response = new Object();
+                            response[apiResponseKeySuccess] = false;
+                            response[apiResponseKeyCode] = apiResponseCodeInvalid;
+                            response[apiResponseKeyMessage] = "No order found with order ID " + id;
+                        }
+
+                        res.json(response);
+                        res.end();
+
+                    });
+
+
+                });
+
+
+
+    });
+
+
     app.listen(apiPort, () => { console.log(appName + ` is now listening port ${apiPort} ...`); });
 
 };
