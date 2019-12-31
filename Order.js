@@ -29,6 +29,28 @@ const Order = new Schema({
         type: String
     },
     shippingAddress: {
+        /* 
+            firstName
+            lastName
+            email
+            phoneNumber
+            addressLineOne
+            addressLineTwo
+            city
+            state
+            country
+            pincode
+        */ 
+        type: Map
+    },
+    shippingDetails: {
+        /*
+            shippingPartner
+            trackingNumber
+            trackingLink
+            labelCreationDate
+            expectedDeliveryDate
+        */
         type: Map
     },
     status: {
