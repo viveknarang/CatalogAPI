@@ -1722,6 +1722,81 @@ var main = function (rc, esc) {
     });
 
 
+
+    app.put('/order/' + apiVersion + '/orders/:ID/updatestatus/:STATUS',
+
+    [
+        check('ID').exists().withMessage("ID should be present ..."),
+        check('ID').isLength({ max: 50 }).withMessage("ID cannot be more than 50 characters ..."),
+        check('STATUS').isIn(['ORDERED', 'UNDER_PROCESSING', 'SHIPPED', 'CANCELED']).withMessage("The status of the order can only be among: `ORDERED`, `UNDER_PROCESSING`, `SHIPPED` and `CANCELED`")
+    ],
+
+    authenticate,
+
+    validateInput,
+
+    (req, res) => {
+
+        let id = req.params.ID;
+        let status = req.params.STATUS;
+       
+        res.setHeader('Content-Type', 'application/json');
+
+                redisClient.get(req.headers['x-access-token'], function (error, customer_domain) {
+
+                    
+                    var query = { "orderID" : id };
+
+                    uQuery = {
+                        $set: {
+
+                            "status": status
+
+                        }
+                    };
+
+                    let ocollection = customer_domain + "." + ordersCollection;
+
+                    dbClient.db(externalDB).collection(ocollection).updateOne(query, uQuery, function (err, result) {
+
+                        if (err) {
+                            apiResponseError(res);
+                            throw err;
+                        }
+
+                        console.log(result['result']);
+
+                        if (result['result']['nModified'] == 1) {
+                            response = new Object();
+                            response[apiResponseKeySuccess] = true;
+                            response[apiResponseKeyCode] = apiResponseCodeOk;
+                            response[apiResponseKeyMessage] = "Order with order id " + id + " updated ... ";
+                        } else if (result['result']['n'] == 0) {
+                            response = new Object();
+                            response[apiResponseKeySuccess] = false;
+                            response[apiResponseKeyCode] = apiResponseCodeInvalid;
+                            response[apiResponseKeyMessage] = "No order found with order ID " + id;
+                        } else if (result['result']['n'] == 1 && result['result']['nModified'] == 0) {
+                            response = new Object();
+                            response[apiResponseKeySuccess] = false;
+                            response[apiResponseKeyCode] = apiResponseCodeInvalid;
+                            response[apiResponseKeyMessage] = "Nothing to update for order ID " + id;
+                        }
+
+                        res.json(response);
+                        res.end();
+
+                    });
+
+
+                });
+            
+
+    });
+
+
+
+
     app.listen(apiPort, () => { console.log(appName + ` is now listening port ${apiPort} ...`); });
 
 };
