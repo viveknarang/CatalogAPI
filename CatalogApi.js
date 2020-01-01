@@ -724,9 +724,6 @@ var main = function (rc, esc) {
 
     app.get('/', (req, res) => {
 
-        console.log(path.join(__dirname, '/docs/stylesheets/'));
-
-
         res.sendFile(path.join(__dirname + '/docs/' + homepage));
 
     });
@@ -1836,8 +1833,6 @@ var main = function (rc, esc) {
                             apiResponseError(res);
                             throw err;
                         }
-
-                        console.log(result['result']);
 
                         if (result['result']['nModified'] == 1) {
                             response = new Object();
