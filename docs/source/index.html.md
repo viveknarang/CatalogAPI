@@ -603,6 +603,409 @@ PGID      | the group ID of the product group to be deleted
 
 
 
+# Order API
+
+## Create an order
+
+> Sample valid API response:
+
+```json
+{
+    "success": true,
+    "code": "OK",
+    "message": "Order ( Order ID: 124 ) for customer 456 is created ...",
+    "response": {
+        "status": "ORDERED",
+        "shippingAddress": {
+            "firstName": "Vivek",
+            "lastName": "Narang",
+            "addressLineOne": "119 A/4 BAI KA BAGH",
+            "addressLineTwo": "Mishir Bagh",
+            "city": "Allahabad",
+            "state": "UP",
+            "country": "India",
+            "pincode": "211003",
+            "email": "vivek.narang10@gmail.com",
+            "phoneNumber": "6476154080"
+        },
+        "orderID": "124",
+        "customerID": "456",
+        "orderDate": "2001-12-31T05:00:00.000Z",
+        "totalAmount": 101,
+        "currency": "USD",
+        "isGift": false,
+        "productQuantity": {
+            "389743987": "5555"
+        },
+        "productPrice": {
+            "389743987": "55.8"
+        },
+        "shippingDetails": null
+    }
+}
+```
+
+Use this endpoint to create an order entry in the database. Details on the fields and the constraints is listed below. 
+
+
+### HTTP Request
+
+`POST http://api.gallao.io/order/{API version}/orders`
+
+### Header
+
+Parameter      |                 Description
+-------------- | --------------------------------------------
+x-access-token | The access token that you receive upon login
+Content-Type   | application/x-www-form-urlencoded
+
+### Body Parameters
+
+Parameter                         |               Constraints                           |
+--------------------------------- | --------------------------------------------------- |
+shippingAddress.firstName         |  String, Less than equal to 50 characters           |
+shippingAddress.lastName          |  String, Less than equal to 50 characters           |
+shippingAddress.addressLineOne    |  String, Less than equal to 50 characters           |
+shippingAddress.addressLineTwo    |  String, Less than equal to 50 characters (Optional)|
+shippingAddress.city              |  String, Less than equal to 50 characters           |
+shippingAddress.state             |  String, Less than equal to 50 characters           |
+shippingAddress.country           |  String, Less than equal to 50 characters           |
+shippingAddress.pincode           |  String, Less than equal to 50 characters           |
+shippingAddress.email             |  Valid Email                                        |
+shippingAddress.phoneNumber       |  String, Less than 12 characters                    |
+orderID                           |  Alphanumeric, Less than equal to 50 characters     |
+customerID                        |  Alphanumeric, Less than equal to 50 characters     |
+orderDate                         |  Valid Date                                         |
+totalAmount                       |  Float                                              |
+currency                          |  Currently Acceptable 'USD', 'CAD', 'EUR', 'INR'    |
+isGift                            |  Boolean - true OR false                            |
+status                            |  Acceptable order state only ORDERED at creation    |
+productQuantity                   |  Map { SKU => Quantity }, multiple entries allowed  | 
+productPrice                      |  Map { SKU => Price }, multiple entries allowed     |
+
+
+
+### Response
+
+      Key                 |             Description                                     |
+------------------------- | ------------------------------------------------------------|
+success                   | Flag to tell if the request was successful                  |
+code                      | Additional code for more specific information               |
+message                   | Addtitional text message for more information               |
+response                  | Order object returned in response                           |
+
+
+## Get orders for a customer
+
+> Sample valid API response:
+
+```json
+{
+    "success": true,
+    "code": "OK",
+    "response": [
+        {
+            "_id": "5e0c0b30df2cabd231d7735f",
+            "status": "ORDERED",
+            "shippingAddress": {
+                "firstName": "Vivek",
+                "lastName": "Narang",
+                "addressLineOne": "119 A/4 BAI KA BAGH",
+                "addressLineTwo": "Mishir Bagh",
+                "city": "Allahabad",
+                "state": "UP",
+                "country": "India",
+                "pincode": "211003",
+                "email": "vivek.narang10@gmail.com",
+                "phoneNumber": "6476154080"
+            },
+            "orderID": "124",
+            "customerID": "456",
+            "orderDate": "2001-12-31T05:00:00.000Z",
+            "totalAmount": 101,
+            "currency": "USD",
+            "isGift": false,
+            "productQuantity": {
+                "389743987": "5555"
+            },
+            "productPrice": {
+                "389743987": "55.8"
+            },
+            "shippingDetails": null
+        }
+    ]
+}
+```
+
+Use this endpoint to get all the orders associated with a customer using the customer ID. 
+
+
+### HTTP Request
+
+`GET http://api.gallao.io/order/{API version}/orders/customers/{CID}`
+
+### Header
+
+Parameter | Description
+--------- | -----------
+x-access-token | The access token that you receive upon login
+
+### URL Parameters
+
+Parameter                 |               Description           |
+------------------------- | ------------------------------------|
+CID                       | Customer ID                         |
+
+### Response
+
+      Key                 |             Description                                     |
+------------------------- | ------------------------------------------------------------|
+success                   | Flag to tell if the request was successful                  |
+code                      | Additional code for more specific information               |
+response                  | Order object returned in response                           |
+
+
+
+
+## Get order by order ID
+
+> Sample valid API response:
+
+```json
+{
+    "success": true,
+    "code": "OK",
+    "response": [
+        {
+            "_id": "5e0c0b30df2cabd231d7735f",
+            "status": "ORDERED",
+            "shippingAddress": {
+                "firstName": "Vivek",
+                "lastName": "Narang",
+                "addressLineOne": "119 A/4 BAI KA BAGH",
+                "addressLineTwo": "Mishir Bagh",
+                "city": "Allahabad",
+                "state": "UP",
+                "country": "India",
+                "pincode": "211003",
+                "email": "vivek.narang10@gmail.com",
+                "phoneNumber": "6476154080"
+            },
+            "orderID": "124",
+            "customerID": "456",
+            "orderDate": "2001-12-31T05:00:00.000Z",
+            "totalAmount": 101,
+            "currency": "USD",
+            "isGift": false,
+            "productQuantity": {
+                "389743987": "5555"
+            },
+            "productPrice": {
+                "389743987": "55.8"
+            },
+            "shippingDetails": null
+        }
+    ]
+}
+```
+
+Use this endpoint to get the order object using the order ID. 
+
+
+### HTTP Request
+
+`GET http://api.gallao.io/order/{API version}/orders/{ID}`
+
+### Header
+
+Parameter | Description
+--------- | -----------
+x-access-token | The access token that you receive upon login
+
+### URL Parameters
+
+Parameter                 |               Description           |
+------------------------- | ------------------------------------|
+ID                        |  Order ID                           | 
+
+### Response
+
+      Key                 |             Description                                     |
+------------------------- | ------------------------------------------------------------|
+success                   | Flag to tell if the request was successful                  |
+code                      | Additional code for more specific information               |
+response                  | Order object returned in response                           |
+
+
+
+
+## Update order status
+
+> Sample valid API response:
+
+```json
+{
+    "success": true,
+    "code": "OK",
+    "message": "Order with order id 124 updated ... "
+}
+```
+
+> Sample invalid API response:
+
+```json
+{
+    "success": false,
+    "code": "INVALID",
+    "message": "Nothing to update for order ID 124"
+}
+```
+
+> Sample invalid API response:
+
+```json
+{
+    "success": false,
+    "code": "INVALID",
+    "message": "No order found with order ID 1245"
+}
+```
+
+
+Use this endpoint to update the status of the order. The status of the order can only be among the following values: **'ORDERED', 'UNDER_PROCESSING', 'SHIPPED', 'CANCELED'**
+
+
+### HTTP Request
+
+`PUT http://api.gallao.io/order/{API version}/orders/{ID}/updatestatus/{STATUS}`
+
+### Header
+
+Parameter | Description
+--------- | -----------
+x-access-token | The access token that you receive upon login
+
+### URL Parameters
+
+Parameter                 |               Description                             |
+------------------------- | ------------------------------------------------------|
+ID                        |  Order ID                                             |
+STATUS                    |  'ORDERED', 'UNDER_PROCESSING', 'SHIPPED', 'CANCELED' |
+
+
+
+### Response
+
+      Key                 |             Description                                     |
+------------------------- | ------------------------------------------------------------|
+success                   | Flag to tell if the request was successful                  |
+code                      | Additional code for more specific information               |
+message                   | Additional information on the API call                      |
+
+
+
+
+## Delete order by order ID
+
+> Sample valid API response:
+
+```json
+{
+    "success": true,
+    "code": "OK",
+    "message": "Order with order ID 124 deleted ..."
+}
+```
+
+> Sample invalid API response:
+
+```json
+{
+    "success": false,
+    "code": "INVALID",
+    "message": "No order found with order ID 124"
+}
+```
+
+Use this endpoint to delete an order using the order ID. Recommended to use this endpoint carefully. 
+
+
+### HTTP Request
+
+`DELETE http://api.gallao.io/order/{API version}/orders/{ID}`
+
+### Header
+
+Parameter | Description
+--------- | -----------
+x-access-token | The access token that you receive upon login
+
+### URL Parameters
+
+Parameter                 |               Description           |
+------------------------- | ------------------------------------|
+ID                        |  Order ID                           |
+
+### Response
+
+      Key                 |             Description                                     |
+------------------------- | ------------------------------------------------------------|
+success                   | Flag to tell if the request was successful                  |
+code                      | Additional code for more specific information               |
+message                   | Additional information on the API call                      |
+
+
+
+
+## Delete all orders for a customer
+
+> Sample valid API response:
+
+```json
+{
+    "success": true,
+    "code": "OK",
+    "message": "A total of 1 order(s) for customer ID 456 deleted ..."
+}
+```
+
+> Sample valid API response:
+
+```json
+{
+    "success": false,
+    "code": "INVALID",
+    "message": "No order(s) found for customer ID 456"
+}
+```
+
+
+Use this endpoint to delete all orders associated with a customer using the customer ID. Recommended that this endpoint be used carefully as this data will be used by the order lifecycle management engine and also order information will be archived (planned feature).
+
+
+### HTTP Request
+
+`DELETE http://api.gallao.io/order/{API version}/orders/customer/{CID}`
+
+### Header
+
+Parameter      | Description                                  |
+-------------- | ---------------------------------------------|
+x-access-token | The access token that you receive upon login |
+
+### URL Parameters
+
+Parameter                 |               Description           |
+------------------------- | ------------------------------------|
+CID                       |  Customer ID  
+
+### Response
+
+      Key                 |             Description                                     |
+------------------------- | ------------------------------------------------------------|
+success                   | Flag to tell if the request was successful                  |
+code                      | Additional code for more specific information               |
+message                   | Additional information on the API call                      |
 
 
 

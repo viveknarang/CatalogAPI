@@ -250,6 +250,29 @@
               </ul>
           </li>
           <li>
+            <a href="#order-api" class="toc-h1 toc-link" data-title="Order API">Order API</a>
+              <ul class="toc-list-h2">
+                  <li>
+                    <a href="#create-an-order" class="toc-h2 toc-link" data-title="Create an order">Create an order</a>
+                  </li>
+                  <li>
+                    <a href="#get-orders-for-a-customer" class="toc-h2 toc-link" data-title="Get orders for a customer">Get orders for a customer</a>
+                  </li>
+                  <li>
+                    <a href="#get-order-by-order-id" class="toc-h2 toc-link" data-title="Get order by order ID">Get order by order ID</a>
+                  </li>
+                  <li>
+                    <a href="#update-order-status" class="toc-h2 toc-link" data-title="Update order status">Update order status</a>
+                  </li>
+                  <li>
+                    <a href="#delete-order-by-order-id" class="toc-h2 toc-link" data-title="Delete order by order ID">Delete order by order ID</a>
+                  </li>
+                  <li>
+                    <a href="#delete-all-orders-for-a-customer" class="toc-h2 toc-link" data-title="Delete all orders for a customer">Delete all orders for a customer</a>
+                  </li>
+              </ul>
+          </li>
+          <li>
             <a href="#search-api" class="toc-h1 toc-link" data-title="Search API">Search API</a>
               <ul class="toc-list-h2">
                   <li>
@@ -1119,6 +1142,556 @@ With the field validFor in response, you can calculate the time after with your 
 <td>the group ID of the product group to be deleted</td>
 </tr>
 </tbody></table>
+<h1 id='order-api'>Order API</h1><h2 id='create-an-order'>Create an order</h2>
+<blockquote>
+<p>Sample valid API response:</p>
+</blockquote>
+<pre class="highlight json tab-json"><code><span class="p">{</span><span class="w">
+    </span><span class="s2">"success"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w">
+    </span><span class="s2">"code"</span><span class="p">:</span><span class="w"> </span><span class="s2">"OK"</span><span class="p">,</span><span class="w">
+    </span><span class="s2">"message"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Order ( Order ID: 124 ) for customer 456 is created ..."</span><span class="p">,</span><span class="w">
+    </span><span class="s2">"response"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+        </span><span class="s2">"status"</span><span class="p">:</span><span class="w"> </span><span class="s2">"ORDERED"</span><span class="p">,</span><span class="w">
+        </span><span class="s2">"shippingAddress"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+            </span><span class="s2">"firstName"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Vivek"</span><span class="p">,</span><span class="w">
+            </span><span class="s2">"lastName"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Narang"</span><span class="p">,</span><span class="w">
+            </span><span class="s2">"addressLineOne"</span><span class="p">:</span><span class="w"> </span><span class="s2">"119 A/4 BAI KA BAGH"</span><span class="p">,</span><span class="w">
+            </span><span class="s2">"addressLineTwo"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Mishir Bagh"</span><span class="p">,</span><span class="w">
+            </span><span class="s2">"city"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Allahabad"</span><span class="p">,</span><span class="w">
+            </span><span class="s2">"state"</span><span class="p">:</span><span class="w"> </span><span class="s2">"UP"</span><span class="p">,</span><span class="w">
+            </span><span class="s2">"country"</span><span class="p">:</span><span class="w"> </span><span class="s2">"India"</span><span class="p">,</span><span class="w">
+            </span><span class="s2">"pincode"</span><span class="p">:</span><span class="w"> </span><span class="s2">"211003"</span><span class="p">,</span><span class="w">
+            </span><span class="s2">"email"</span><span class="p">:</span><span class="w"> </span><span class="s2">"vivek.narang10@gmail.com"</span><span class="p">,</span><span class="w">
+            </span><span class="s2">"phoneNumber"</span><span class="p">:</span><span class="w"> </span><span class="s2">"6476154080"</span><span class="w">
+        </span><span class="p">},</span><span class="w">
+        </span><span class="s2">"orderID"</span><span class="p">:</span><span class="w"> </span><span class="s2">"124"</span><span class="p">,</span><span class="w">
+        </span><span class="s2">"customerID"</span><span class="p">:</span><span class="w"> </span><span class="s2">"456"</span><span class="p">,</span><span class="w">
+        </span><span class="s2">"orderDate"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2001-12-31T05:00:00.000Z"</span><span class="p">,</span><span class="w">
+        </span><span class="s2">"totalAmount"</span><span class="p">:</span><span class="w"> </span><span class="mi">101</span><span class="p">,</span><span class="w">
+        </span><span class="s2">"currency"</span><span class="p">:</span><span class="w"> </span><span class="s2">"USD"</span><span class="p">,</span><span class="w">
+        </span><span class="s2">"isGift"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w">
+        </span><span class="s2">"productQuantity"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+            </span><span class="s2">"389743987"</span><span class="p">:</span><span class="w"> </span><span class="s2">"5555"</span><span class="w">
+        </span><span class="p">},</span><span class="w">
+        </span><span class="s2">"productPrice"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+            </span><span class="s2">"389743987"</span><span class="p">:</span><span class="w"> </span><span class="s2">"55.8"</span><span class="w">
+        </span><span class="p">},</span><span class="w">
+        </span><span class="s2">"shippingDetails"</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="w">
+    </span><span class="p">}</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre>
+<p>Use this endpoint to create an order entry in the database. Details on the fields and the constraints is listed below. </p>
+<h3 id='http-request-8'>HTTP Request</h3>
+<p><code>POST http://api.gallao.io/order/{API version}/orders</code></p>
+<h3 id='header-7'>Header</h3>
+<table><thead>
+<tr>
+<th>Parameter</th>
+<th>Description</th>
+</tr>
+</thead><tbody>
+<tr>
+<td>x-access-token</td>
+<td>The access token that you receive upon login</td>
+</tr>
+<tr>
+<td>Content-Type</td>
+<td>application/x-www-form-urlencoded</td>
+</tr>
+</tbody></table>
+<h3 id='body-parameters-3'>Body Parameters</h3>
+<table><thead>
+<tr>
+<th>Parameter</th>
+<th>Constraints</th>
+</tr>
+</thead><tbody>
+<tr>
+<td>shippingAddress.firstName</td>
+<td>String, Less than equal to 50 characters</td>
+</tr>
+<tr>
+<td>shippingAddress.lastName</td>
+<td>String, Less than equal to 50 characters</td>
+</tr>
+<tr>
+<td>shippingAddress.addressLineOne</td>
+<td>String, Less than equal to 50 characters</td>
+</tr>
+<tr>
+<td>shippingAddress.addressLineTwo</td>
+<td>String, Less than equal to 50 characters (Optional)</td>
+</tr>
+<tr>
+<td>shippingAddress.city</td>
+<td>String, Less than equal to 50 characters</td>
+</tr>
+<tr>
+<td>shippingAddress.state</td>
+<td>String, Less than equal to 50 characters</td>
+</tr>
+<tr>
+<td>shippingAddress.country</td>
+<td>String, Less than equal to 50 characters</td>
+</tr>
+<tr>
+<td>shippingAddress.pincode</td>
+<td>String, Less than equal to 50 characters</td>
+</tr>
+<tr>
+<td>shippingAddress.email</td>
+<td>Valid Email</td>
+</tr>
+<tr>
+<td>shippingAddress.phoneNumber</td>
+<td>String, Less than 12 characters</td>
+</tr>
+<tr>
+<td>orderID</td>
+<td>Alphanumeric, Less than equal to 50 characters</td>
+</tr>
+<tr>
+<td>customerID</td>
+<td>Alphanumeric, Less than equal to 50 characters</td>
+</tr>
+<tr>
+<td>orderDate</td>
+<td>Valid Date</td>
+</tr>
+<tr>
+<td>totalAmount</td>
+<td>Float</td>
+</tr>
+<tr>
+<td>currency</td>
+<td>Currently Acceptable &#39;USD&#39;, &#39;CAD&#39;, &#39;EUR&#39;, &#39;INR&#39;</td>
+</tr>
+<tr>
+<td>isGift</td>
+<td>Boolean - true OR false</td>
+</tr>
+<tr>
+<td>status</td>
+<td>Acceptable order state only ORDERED at creation</td>
+</tr>
+<tr>
+<td>productQuantity</td>
+<td>Map { SKU =&gt; Quantity }, multiple entries allowed</td>
+</tr>
+<tr>
+<td>productPrice</td>
+<td>Map { SKU =&gt; Price }, multiple entries allowed</td>
+</tr>
+</tbody></table>
+<h3 id='response-6'>Response</h3>
+<table><thead>
+<tr>
+<th>Key</th>
+<th>Description</th>
+</tr>
+</thead><tbody>
+<tr>
+<td>success</td>
+<td>Flag to tell if the request was successful</td>
+</tr>
+<tr>
+<td>code</td>
+<td>Additional code for more specific information</td>
+</tr>
+<tr>
+<td>message</td>
+<td>Addtitional text message for more information</td>
+</tr>
+<tr>
+<td>response</td>
+<td>Order object returned in response</td>
+</tr>
+</tbody></table>
+<h2 id='get-orders-for-a-customer'>Get orders for a customer</h2>
+<blockquote>
+<p>Sample valid API response:</p>
+</blockquote>
+<pre class="highlight json tab-json"><code><span class="p">{</span><span class="w">
+    </span><span class="s2">"success"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w">
+    </span><span class="s2">"code"</span><span class="p">:</span><span class="w"> </span><span class="s2">"OK"</span><span class="p">,</span><span class="w">
+    </span><span class="s2">"response"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w">
+        </span><span class="p">{</span><span class="w">
+            </span><span class="s2">"_id"</span><span class="p">:</span><span class="w"> </span><span class="s2">"5e0c0b30df2cabd231d7735f"</span><span class="p">,</span><span class="w">
+            </span><span class="s2">"status"</span><span class="p">:</span><span class="w"> </span><span class="s2">"ORDERED"</span><span class="p">,</span><span class="w">
+            </span><span class="s2">"shippingAddress"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+                </span><span class="s2">"firstName"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Vivek"</span><span class="p">,</span><span class="w">
+                </span><span class="s2">"lastName"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Narang"</span><span class="p">,</span><span class="w">
+                </span><span class="s2">"addressLineOne"</span><span class="p">:</span><span class="w"> </span><span class="s2">"119 A/4 BAI KA BAGH"</span><span class="p">,</span><span class="w">
+                </span><span class="s2">"addressLineTwo"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Mishir Bagh"</span><span class="p">,</span><span class="w">
+                </span><span class="s2">"city"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Allahabad"</span><span class="p">,</span><span class="w">
+                </span><span class="s2">"state"</span><span class="p">:</span><span class="w"> </span><span class="s2">"UP"</span><span class="p">,</span><span class="w">
+                </span><span class="s2">"country"</span><span class="p">:</span><span class="w"> </span><span class="s2">"India"</span><span class="p">,</span><span class="w">
+                </span><span class="s2">"pincode"</span><span class="p">:</span><span class="w"> </span><span class="s2">"211003"</span><span class="p">,</span><span class="w">
+                </span><span class="s2">"email"</span><span class="p">:</span><span class="w"> </span><span class="s2">"vivek.narang10@gmail.com"</span><span class="p">,</span><span class="w">
+                </span><span class="s2">"phoneNumber"</span><span class="p">:</span><span class="w"> </span><span class="s2">"6476154080"</span><span class="w">
+            </span><span class="p">},</span><span class="w">
+            </span><span class="s2">"orderID"</span><span class="p">:</span><span class="w"> </span><span class="s2">"124"</span><span class="p">,</span><span class="w">
+            </span><span class="s2">"customerID"</span><span class="p">:</span><span class="w"> </span><span class="s2">"456"</span><span class="p">,</span><span class="w">
+            </span><span class="s2">"orderDate"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2001-12-31T05:00:00.000Z"</span><span class="p">,</span><span class="w">
+            </span><span class="s2">"totalAmount"</span><span class="p">:</span><span class="w"> </span><span class="mi">101</span><span class="p">,</span><span class="w">
+            </span><span class="s2">"currency"</span><span class="p">:</span><span class="w"> </span><span class="s2">"USD"</span><span class="p">,</span><span class="w">
+            </span><span class="s2">"isGift"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w">
+            </span><span class="s2">"productQuantity"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+                </span><span class="s2">"389743987"</span><span class="p">:</span><span class="w"> </span><span class="s2">"5555"</span><span class="w">
+            </span><span class="p">},</span><span class="w">
+            </span><span class="s2">"productPrice"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+                </span><span class="s2">"389743987"</span><span class="p">:</span><span class="w"> </span><span class="s2">"55.8"</span><span class="w">
+            </span><span class="p">},</span><span class="w">
+            </span><span class="s2">"shippingDetails"</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="w">
+        </span><span class="p">}</span><span class="w">
+    </span><span class="p">]</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre>
+<p>Use this endpoint to get all the orders associated with a customer using the customer ID. </p>
+<h3 id='http-request-9'>HTTP Request</h3>
+<p><code>GET http://api.gallao.io/order/{API version}/orders/customers/{CID}</code></p>
+<h3 id='header-8'>Header</h3>
+<table><thead>
+<tr>
+<th>Parameter</th>
+<th>Description</th>
+</tr>
+</thead><tbody>
+<tr>
+<td>x-access-token</td>
+<td>The access token that you receive upon login</td>
+</tr>
+</tbody></table>
+<h3 id='url-parameters-6'>URL Parameters</h3>
+<table><thead>
+<tr>
+<th>Parameter</th>
+<th>Description</th>
+</tr>
+</thead><tbody>
+<tr>
+<td>CID</td>
+<td>Customer ID</td>
+</tr>
+</tbody></table>
+<h3 id='response-7'>Response</h3>
+<table><thead>
+<tr>
+<th>Key</th>
+<th>Description</th>
+</tr>
+</thead><tbody>
+<tr>
+<td>success</td>
+<td>Flag to tell if the request was successful</td>
+</tr>
+<tr>
+<td>code</td>
+<td>Additional code for more specific information</td>
+</tr>
+<tr>
+<td>response</td>
+<td>Order object returned in response</td>
+</tr>
+</tbody></table>
+<h2 id='get-order-by-order-id'>Get order by order ID</h2>
+<blockquote>
+<p>Sample valid API response:</p>
+</blockquote>
+<pre class="highlight json tab-json"><code><span class="p">{</span><span class="w">
+    </span><span class="s2">"success"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w">
+    </span><span class="s2">"code"</span><span class="p">:</span><span class="w"> </span><span class="s2">"OK"</span><span class="p">,</span><span class="w">
+    </span><span class="s2">"response"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w">
+        </span><span class="p">{</span><span class="w">
+            </span><span class="s2">"_id"</span><span class="p">:</span><span class="w"> </span><span class="s2">"5e0c0b30df2cabd231d7735f"</span><span class="p">,</span><span class="w">
+            </span><span class="s2">"status"</span><span class="p">:</span><span class="w"> </span><span class="s2">"ORDERED"</span><span class="p">,</span><span class="w">
+            </span><span class="s2">"shippingAddress"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+                </span><span class="s2">"firstName"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Vivek"</span><span class="p">,</span><span class="w">
+                </span><span class="s2">"lastName"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Narang"</span><span class="p">,</span><span class="w">
+                </span><span class="s2">"addressLineOne"</span><span class="p">:</span><span class="w"> </span><span class="s2">"119 A/4 BAI KA BAGH"</span><span class="p">,</span><span class="w">
+                </span><span class="s2">"addressLineTwo"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Mishir Bagh"</span><span class="p">,</span><span class="w">
+                </span><span class="s2">"city"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Allahabad"</span><span class="p">,</span><span class="w">
+                </span><span class="s2">"state"</span><span class="p">:</span><span class="w"> </span><span class="s2">"UP"</span><span class="p">,</span><span class="w">
+                </span><span class="s2">"country"</span><span class="p">:</span><span class="w"> </span><span class="s2">"India"</span><span class="p">,</span><span class="w">
+                </span><span class="s2">"pincode"</span><span class="p">:</span><span class="w"> </span><span class="s2">"211003"</span><span class="p">,</span><span class="w">
+                </span><span class="s2">"email"</span><span class="p">:</span><span class="w"> </span><span class="s2">"vivek.narang10@gmail.com"</span><span class="p">,</span><span class="w">
+                </span><span class="s2">"phoneNumber"</span><span class="p">:</span><span class="w"> </span><span class="s2">"6476154080"</span><span class="w">
+            </span><span class="p">},</span><span class="w">
+            </span><span class="s2">"orderID"</span><span class="p">:</span><span class="w"> </span><span class="s2">"124"</span><span class="p">,</span><span class="w">
+            </span><span class="s2">"customerID"</span><span class="p">:</span><span class="w"> </span><span class="s2">"456"</span><span class="p">,</span><span class="w">
+            </span><span class="s2">"orderDate"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2001-12-31T05:00:00.000Z"</span><span class="p">,</span><span class="w">
+            </span><span class="s2">"totalAmount"</span><span class="p">:</span><span class="w"> </span><span class="mi">101</span><span class="p">,</span><span class="w">
+            </span><span class="s2">"currency"</span><span class="p">:</span><span class="w"> </span><span class="s2">"USD"</span><span class="p">,</span><span class="w">
+            </span><span class="s2">"isGift"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w">
+            </span><span class="s2">"productQuantity"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+                </span><span class="s2">"389743987"</span><span class="p">:</span><span class="w"> </span><span class="s2">"5555"</span><span class="w">
+            </span><span class="p">},</span><span class="w">
+            </span><span class="s2">"productPrice"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+                </span><span class="s2">"389743987"</span><span class="p">:</span><span class="w"> </span><span class="s2">"55.8"</span><span class="w">
+            </span><span class="p">},</span><span class="w">
+            </span><span class="s2">"shippingDetails"</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="w">
+        </span><span class="p">}</span><span class="w">
+    </span><span class="p">]</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre>
+<p>Use this endpoint to get the order object using the order ID. </p>
+<h3 id='http-request-10'>HTTP Request</h3>
+<p><code>GET http://api.gallao.io/order/{API version}/orders/{ID}</code></p>
+<h3 id='header-9'>Header</h3>
+<table><thead>
+<tr>
+<th>Parameter</th>
+<th>Description</th>
+</tr>
+</thead><tbody>
+<tr>
+<td>x-access-token</td>
+<td>The access token that you receive upon login</td>
+</tr>
+</tbody></table>
+<h3 id='url-parameters-7'>URL Parameters</h3>
+<table><thead>
+<tr>
+<th>Parameter</th>
+<th>Description</th>
+</tr>
+</thead><tbody>
+<tr>
+<td>ID</td>
+<td>Order ID</td>
+</tr>
+</tbody></table>
+<h3 id='response-8'>Response</h3>
+<table><thead>
+<tr>
+<th>Key</th>
+<th>Description</th>
+</tr>
+</thead><tbody>
+<tr>
+<td>success</td>
+<td>Flag to tell if the request was successful</td>
+</tr>
+<tr>
+<td>code</td>
+<td>Additional code for more specific information</td>
+</tr>
+<tr>
+<td>response</td>
+<td>Order object returned in response</td>
+</tr>
+</tbody></table>
+<h2 id='update-order-status'>Update order status</h2>
+<blockquote>
+<p>Sample valid API response:</p>
+</blockquote>
+<pre class="highlight json tab-json"><code><span class="p">{</span><span class="w">
+    </span><span class="s2">"success"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w">
+    </span><span class="s2">"code"</span><span class="p">:</span><span class="w"> </span><span class="s2">"OK"</span><span class="p">,</span><span class="w">
+    </span><span class="s2">"message"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Order with order id 124 updated ... "</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre>
+<blockquote>
+<p>Sample invalid API response:</p>
+</blockquote>
+<pre class="highlight json tab-json"><code><span class="p">{</span><span class="w">
+    </span><span class="s2">"success"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w">
+    </span><span class="s2">"code"</span><span class="p">:</span><span class="w"> </span><span class="s2">"INVALID"</span><span class="p">,</span><span class="w">
+    </span><span class="s2">"message"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Nothing to update for order ID 124"</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre>
+<blockquote>
+<p>Sample invalid API response:</p>
+</blockquote>
+<pre class="highlight json tab-json"><code><span class="p">{</span><span class="w">
+    </span><span class="s2">"success"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w">
+    </span><span class="s2">"code"</span><span class="p">:</span><span class="w"> </span><span class="s2">"INVALID"</span><span class="p">,</span><span class="w">
+    </span><span class="s2">"message"</span><span class="p">:</span><span class="w"> </span><span class="s2">"No order found with order ID 1245"</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre>
+<p>Use this endpoint to update the status of the order. The status of the order can only be among the following values: <strong>&#39;ORDERED&#39;, &#39;UNDER_PROCESSING&#39;, &#39;SHIPPED&#39;, &#39;CANCELED&#39;</strong></p>
+<h3 id='http-request-11'>HTTP Request</h3>
+<p><code>PUT http://api.gallao.io/order/{API version}/orders/{ID}/updatestatus/{STATUS}</code></p>
+<h3 id='header-10'>Header</h3>
+<table><thead>
+<tr>
+<th>Parameter</th>
+<th>Description</th>
+</tr>
+</thead><tbody>
+<tr>
+<td>x-access-token</td>
+<td>The access token that you receive upon login</td>
+</tr>
+</tbody></table>
+<h3 id='url-parameters-8'>URL Parameters</h3>
+<table><thead>
+<tr>
+<th>Parameter</th>
+<th>Description</th>
+</tr>
+</thead><tbody>
+<tr>
+<td>ID</td>
+<td>Order ID</td>
+</tr>
+<tr>
+<td>STATUS</td>
+<td>&#39;ORDERED&#39;, &#39;UNDER_PROCESSING&#39;, &#39;SHIPPED&#39;, &#39;CANCELED&#39;</td>
+</tr>
+</tbody></table>
+<h3 id='response-9'>Response</h3>
+<table><thead>
+<tr>
+<th>Key</th>
+<th>Description</th>
+</tr>
+</thead><tbody>
+<tr>
+<td>success</td>
+<td>Flag to tell if the request was successful</td>
+</tr>
+<tr>
+<td>code</td>
+<td>Additional code for more specific information</td>
+</tr>
+<tr>
+<td>message</td>
+<td>Additional information on the API call</td>
+</tr>
+</tbody></table>
+<h2 id='delete-order-by-order-id'>Delete order by order ID</h2>
+<blockquote>
+<p>Sample valid API response:</p>
+</blockquote>
+<pre class="highlight json tab-json"><code><span class="p">{</span><span class="w">
+    </span><span class="s2">"success"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w">
+    </span><span class="s2">"code"</span><span class="p">:</span><span class="w"> </span><span class="s2">"OK"</span><span class="p">,</span><span class="w">
+    </span><span class="s2">"message"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Order with order ID 124 deleted ..."</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre>
+<blockquote>
+<p>Sample invalid API response:</p>
+</blockquote>
+<pre class="highlight json tab-json"><code><span class="p">{</span><span class="w">
+    </span><span class="s2">"success"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w">
+    </span><span class="s2">"code"</span><span class="p">:</span><span class="w"> </span><span class="s2">"INVALID"</span><span class="p">,</span><span class="w">
+    </span><span class="s2">"message"</span><span class="p">:</span><span class="w"> </span><span class="s2">"No order found with order ID 124"</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre>
+<p>Use this endpoint to delete an order using the order ID. Recommended to use this endpoint carefully. </p>
+<h3 id='http-request-12'>HTTP Request</h3>
+<p><code>DELETE http://api.gallao.io/order/{API version}/orders/{ID}</code></p>
+<h3 id='header-11'>Header</h3>
+<table><thead>
+<tr>
+<th>Parameter</th>
+<th>Description</th>
+</tr>
+</thead><tbody>
+<tr>
+<td>x-access-token</td>
+<td>The access token that you receive upon login</td>
+</tr>
+</tbody></table>
+<h3 id='url-parameters-9'>URL Parameters</h3>
+<table><thead>
+<tr>
+<th>Parameter</th>
+<th>Description</th>
+</tr>
+</thead><tbody>
+<tr>
+<td>ID</td>
+<td>Order ID</td>
+</tr>
+</tbody></table>
+<h3 id='response-10'>Response</h3>
+<table><thead>
+<tr>
+<th>Key</th>
+<th>Description</th>
+</tr>
+</thead><tbody>
+<tr>
+<td>success</td>
+<td>Flag to tell if the request was successful</td>
+</tr>
+<tr>
+<td>code</td>
+<td>Additional code for more specific information</td>
+</tr>
+<tr>
+<td>message</td>
+<td>Additional information on the API call</td>
+</tr>
+</tbody></table>
+<h2 id='delete-all-orders-for-a-customer'>Delete all orders for a customer</h2>
+<blockquote>
+<p>Sample valid API response:</p>
+</blockquote>
+<pre class="highlight json tab-json"><code><span class="p">{</span><span class="w">
+    </span><span class="s2">"success"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w">
+    </span><span class="s2">"code"</span><span class="p">:</span><span class="w"> </span><span class="s2">"OK"</span><span class="p">,</span><span class="w">
+    </span><span class="s2">"message"</span><span class="p">:</span><span class="w"> </span><span class="s2">"A total of 1 order(s) for customer ID 456 deleted ..."</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre>
+<blockquote>
+<p>Sample valid API response:</p>
+</blockquote>
+<pre class="highlight json tab-json"><code><span class="p">{</span><span class="w">
+    </span><span class="s2">"success"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w">
+    </span><span class="s2">"code"</span><span class="p">:</span><span class="w"> </span><span class="s2">"INVALID"</span><span class="p">,</span><span class="w">
+    </span><span class="s2">"message"</span><span class="p">:</span><span class="w"> </span><span class="s2">"No order(s) found for customer ID 456"</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre>
+<p>Use this endpoint to delete all orders associated with a customer using the customer ID. Recommended that this endpoint be used carefully as this data will be used by the order lifecycle management engine and also order information will be archived (planned feature).</p>
+<h3 id='http-request-13'>HTTP Request</h3>
+<p><code>DELETE http://api.gallao.io/order/{API version}/orders/customer/{CID}</code></p>
+<h3 id='header-12'>Header</h3>
+<table><thead>
+<tr>
+<th>Parameter</th>
+<th>Description</th>
+</tr>
+</thead><tbody>
+<tr>
+<td>x-access-token</td>
+<td>The access token that you receive upon login</td>
+</tr>
+</tbody></table>
+<h3 id='url-parameters-10'>URL Parameters</h3>
+<table><thead>
+<tr>
+<th>Parameter</th>
+<th>Description</th>
+</tr>
+</thead><tbody>
+<tr>
+<td>CID</td>
+<td>Customer ID</td>
+</tr>
+</tbody></table>
+<h3 id='response-11'>Response</h3>
+<table><thead>
+<tr>
+<th>Key</th>
+<th>Description</th>
+</tr>
+</thead><tbody>
+<tr>
+<td>success</td>
+<td>Flag to tell if the request was successful</td>
+</tr>
+<tr>
+<td>code</td>
+<td>Additional code for more specific information</td>
+</tr>
+<tr>
+<td>message</td>
+<td>Additional information on the API call</td>
+</tr>
+</tbody></table>
 <h1 id='search-api'>Search API</h1><h2 id='basic-search'>Basic search</h2>
 <blockquote>
 <p>Sample valid API response:</p>
@@ -1228,9 +1801,9 @@ With the field validFor in response, you can calculate the time after with your 
 </span><span class="p">}</span><span class="w">
 </span></code></pre>
 <p>Use this API endpoint to search a product group in the search index. Please note that product group objects are only returned in the response. </p>
-<h3 id='http-request-8'>HTTP Request</h3>
+<h3 id='http-request-14'>HTTP Request</h3>
 <p><code>GET http://api.gallao.io/search/{API version}/search</code></p>
-<h3 id='header-7'>Header</h3>
+<h3 id='header-13'>Header</h3>
 <table><thead>
 <tr>
 <th>Parameter</th>
@@ -1242,7 +1815,7 @@ With the field validFor in response, you can calculate the time after with your 
 <td>The access token that you receive upon login</td>
 </tr>
 </tbody></table>
-<h3 id='url-parameters-6'>URL Parameters</h3>
+<h3 id='url-parameters-11'>URL Parameters</h3>
 <table><thead>
 <tr>
 <th>Parameter</th>
@@ -1266,7 +1839,7 @@ With the field validFor in response, you can calculate the time after with your 
 <td>Boolean, include standard facets</td>
 </tr>
 </tbody></table>
-<h3 id='response-6'>Response</h3>
+<h3 id='response-12'>Response</h3>
 <table><thead>
 <tr>
 <th>Key</th>
